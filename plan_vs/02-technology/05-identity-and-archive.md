@@ -12,7 +12,7 @@ Round 6 (2026-11-05): IDs are **derived by hash** at creation, and **the driver 
 | Key | Looks like | Stored in | Changes? | Used for |
 |---|---|---|---|---|
 | **Location key** | `src/orders.py::OrderService.parse_order` | SQLite only | yes, on every rename/move | structure, call-tree edges, everything recomputable |
-| **Permanent ID** | `0Q8V5W4T2F7KX9M3B6D1RZ4H7K` (26 chars) | the language's in-code ID (Python: an `ID:` line in the docstring) **and/or** the `.vnoc` folder name | **never** | docs, playgrounds, links: everything a person created |
+| **Permanent ID** | `0Q8V5W4T2F7KX9M3B6D1RZ4H7K` (26 chars) | the language's in-code ID (Python: an `ID:` line in a def/class docstring, a `# FileID:` comment at the top of a file) **and/or** the `.vnoc` folder name | **never** | docs, playgrounds, links: everything a person created |
 
 - **A permanent ID is created only when something is attached** (doc, playground, a saved choice), or when injecting under mode `all`.
 - **It's saved permanently the moment it's created**: as a folder with `node.toml`, in the code, or both. **Never generate IDs only in SQLite**: a cache-only ID would be lost on rebuild and point nowhere.
@@ -28,6 +28,8 @@ id = base32( blake3( repo_relative_path + "::" + qualname + "#" + occurrence )[.
   repo_relative_path   forward slashes, relative to the git root:  src/orders.py
   qualname             OrderService.parse_order
   occurrence           1, or 2, 3… for a second def of the same name in the same file (default 1)
+
+  files and folders:   qualname is empty  →  "src/orders.py::#1"   (a file and a folder can't share a path)
 ```
 
 - **Why a hash (round-5 reply to R1):** the same function on two branches gets **the same ID**, so it gets the same `ID:` line and the same `.vnoc` folder. Git merges identical changes
@@ -36,8 +38,8 @@ id = base32( blake3( repo_relative_path + "::" + qualname + "#" + occurrence )[.
   This covers a function deleted and later re-created under the same name: its old, archived docs keep the old ID.
 - **Derived once, then permanent.** It doesn't follow later renames; that's the point of a permanent ID.
 - **26 characters**, so sharding by the last 2 characters and everything else stays as it was.
-  **Encode like a ULID** (Crockford base32 of the 128-bit number, with the 2 spare bits in the *first* character). Plain RFC 4648 base32 puts the spare bits in the *last*
-  character, which then has only 8 possible values, so there'd be 256 shards instead of 1,024 (round-6 review, R13).
+  **Encode like a ULID** (Crockford base32 of the 128-bit number, with the 2 leftover bits in the *first* character). Plain RFC 4648 base32 puts them in the *last*
+  character, which then has only 8 possible values, so there'd be 256 shards instead of 1,024 (R13, **decided: VS-D60**).
 - **Two IDs on one node can still happen** (attach on branch A, rename on branch B, attach again on B → different inputs → different IDs). The re-key rules in 02-04 §6
   stay as the fallback. Their tie-break is now **the smaller ID wins** (there's no timestamp in a hash).
 - **Old V-NOC IDs** (UUID v4 strings, 36 chars) are still read and kept. Sharding by their last 2 hex characters works the same.
@@ -80,7 +82,18 @@ class OrderService:
 
 - Folders never get IDs in source. V-NOC **never creates or edits `__init__.py`**, because that changes Python imports (namespace packages, pytest discovery). A folder's identity
   comes from its children's content hashes (§4, step 2). Supersedes FolderID and VS-P17.
-- **File (module) IDs are up to the driver too.** pylspt has no module-level ID today, so in v1 a `.py` file is found through `node.toml` only, like a non-code file (🟡 A17).
+- **File IDs are a comment at the top of the file (VS-D59).** Placement is still the driver's job. For Python:
+
+  ```python
+  #!/usr/bin/env python3
+  # -*- coding: utf-8 -*-
+  # Copyright 2026 Acme. Licensed under MIT.     ← a leading comment block (license header) stays first: license checkers expect it there
+  # FileID: 0Q8V5W4T2F7KX9M3B6D1RZ4H7K          ← after shebang, encoding and any leading comment block; before the first statement
+  """Orders module."""                           ← a comment before the module docstring doesn't change __doc__
+  ```
+
+  This is **new driver work**: pylspt writes def/class IDs today, not file IDs. Reading is tolerant (`#FileID:`, extra spaces); removal is the same exact-span rule as below.
+  Non-code files (README, YAML…) still use `node.toml` only.
 - **Trade-off to know about (R14):** a docstring ID is part of `__doc__`, so it shows in `help()`, IDEs' hover text and Sphinx/pdoc output. The old V-NOC worked the same way.
 
 **`id_in_code` in `node.toml`: one per node, three values.** It replaces the earlier separate "don't re-add" flag.
@@ -126,7 +139,7 @@ ids  = "none"
 ```
 should_have_id_in_code(node) =
     if !node.in_scope            { return false }          // VS-D21: pulled-in and third-party nodes never get in-code IDs
-    if !driver.can_carry(node)   { return false }          // the driver says. Python v1: classes and functions. Not folders, files, non-code files.
+    if !driver.can_carry(node)   { return false }          // the driver says. Python v1: files, classes, functions. Not folders, not non-code files.
     match node.id_in_code {                                // only exists if the node has a node.toml
         Some(Yes)   => true,
         Some(Never) => false,
@@ -156,7 +169,7 @@ should_have_id_in_code(node) =
 
 ## 4. Finding a node again: the matching ladder (VS-D44)
 
-Runs during sync for every permanent ID **not found in code**. That covers `no` / `never`, a lost in-code ID, Python files (no module ID in v1), and non-code files.
+Runs during sync for every permanent ID **not found in code**. That covers `no` / `never`, a lost in-code ID, and non-code files.
 
 | Step | Signal | Covers |
 |---|---|---|
@@ -277,7 +290,13 @@ user saves (Manual or FocusOut)
   └─ onDidSave → vnoc/filesChanged → content hash == the predicted one → no re-parse loop
 ```
 
-- It must be **fast** (one buffer, no project work). VS Code gives save participants a short time budget **[check] C8**. Missing it breaks nothing; the next save retries.
+- **The time budget (C8, answered from the API docs):** all extensions' `onWillSaveTextDocument` listeners share **about 1.5 s**. VS Code may skip the event in exceptional
+  cases (shutting down with dirty files), ignores the edits if the document changed meanwhile, and stops calling a listener that keeps timing out or failing.
+  So **the hook stays lightweight (VS-D66):**
+  - On `onDidChangeTextDocument` (debounced), the core asks the driver for the planned ID edits **for that document version**, and keeps them.
+  - At save time, the hook returns the stored edits if `document.version` still matches. Hash-derived IDs (VS-D50) make the plan deterministic, so precomputing is safe.
+  - Version doesn't match (typed in the last few ms) → it computes for this one buffer if that's quick, else returns **no edits**. The next save catches up; nothing breaks.
+- **API saves count as `Manual`.** `document.save()` from the extension, e.g. ⌘S inside the canvas (VS-D62), fires the hook with `TextDocumentSaveReason.Manual`, so save-time IDs work there too.
 - Untrusted workspace → the participant isn't registered (VS-D18).
 
 ## 8. Scope, pulled-in files, third-party code, manual sync (VS-D20, VS-D21, VS-D22, VS-D32)

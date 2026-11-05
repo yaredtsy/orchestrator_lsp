@@ -7,7 +7,7 @@
 > **diverges** where the product changed (storage, API, packaging, identity, drivers) and **points back** to `plan/` where the Rust core
 > stays the same (scan, diff, reconcile, call-tree layers). See [`01-decisions/02-relation-to-old-plan.md`](01-decisions/02-relation-to-old-plan.md).
 >
-> **Phase:** 🟢 **Phase 1: requirements and decisions.** Six review rounds are in the [decision log](01-decisions/01-decision-log.md).
+> **Phase:** 🟢 **Phase 1: requirements and decisions.** Eight review rounds are in the [decision log](01-decisions/01-decision-log.md).
 > Phase 2 starts once [`03-next/01-review-checklist.md`](03-next/01-review-checklist.md) is answered.
 >
 > **Style:** written to teach. New VS Code ideas get a **🧩 VS Code note**, Rust ideas a **🦀 Rust note**.
@@ -44,7 +44,8 @@ User installs "V-NOC" (VS Code Marketplace, or Open VSX for Cursor / Windsurf / 
 │   ├── C1. Sidebar tree      Root ▸ folders ▸ files ▸ classes ▸ functions  (pulled-in files dimmed)
 │   ├── C2. Canvas            open any node as a graph; double-click = focus
 │   │     ├── node card       [▸] expand · [</>] code inside the card · [⤢] zoom dialog · 🔗 ID · 📄 docs
-│   │     ├── tabs            Canvas | Code   (code editable: a view of VS Code's document)
+│   │     ├── tabs            Canvas | Code   (code editable everywhere; ⌘S/Ctrl+S saves the focused one)
+│   │     ├── doc panel       [📄 Docs] toggle: the selected node's docs · read · edit · [+ Add] · [🗑 Remove]
 │   │     └── ★ Focus stack   focus · Back · Clear · click the breadcrumb to jump
 │   ├── C3. Call tree         lazy only: open ▸ N levels ▸ expand ▸ N more   (N = a setting, default 3)
 │   │     ├── calls leaving the scope are still followed; those repo files get pulled in, never ID'd
@@ -57,7 +58,7 @@ User installs "V-NOC" (VS Code Marketplace, or Open VSX for Cursor / Windsurf / 
 │   │     └── later: "Share this doc" / "Make private"
 │   ├── D2. Playground        a snippet bound to a node, run in the VS Code terminal (trusted only)
 │   └── D3. Per-node ID       right-click any file / class / function (in scope)
-│         ├── [Add permanent ID]     ──► one `ID:` line, placed by the driver (Python: docstring); an undoable edit
+│         ├── [Add permanent ID]     ──► placed by the driver (Python: `ID:` in the docstring; files: `# FileID:` comment on top); undoable
 │         ├── [Remove permanent ID]  ──► the recorded span, only if its text still matches; docs stay; id_in_code = never
 │         └── folder ▸ IDs for this folder and below ▸ All / On attach / None / Inherit
 │
@@ -80,12 +81,14 @@ User installs "V-NOC" (VS Code Marketplace, or Open VSX for Cursor / Windsurf / 
 │   ├── F2. IDs → all / on attach   preview first, then inject (per-node choices always win)
 │   ├── F3. scope · call-tree depth · auto/manual sync
 │   ├── F4. Rebuild index    delete the cache, re-index; docs untouched
-│   └── F5. team ↔ solo      solo → team: docs stay private until you "Share all docs…" (with a preview)
+│   └── F5. team ↔ solo      only changes where NEW docs go; existing ones move only when you Share / Make private
 │
 └── G. SHARES WITH GIT
     ├── team: committed = vnoc.toml + nodes/ ;  ignored = local.toml + local/ (private docs, cache)
-    ├── solo: only the local side exists; .vnoc/.gitignore is "*"  → nothing from .vnoc/ ever shows in git status
-    ├── V-NOC writes .vnoc/.gitignore itself; your root .gitignore is never touched
+    ├── solo: only the local side exists (local.toml + local/); .vnoc/.gitignore is "*" → nothing from .vnoc/ in git status
+    ├── .vnoc/.gitignore is written at setup (team: local/ + local.toml) and only a mode switch changes it; root .gitignore never touched
+    ├── share / make private = MOVE the file or node folder between local/nodes/ and nodes/
+    ├── one node can have shared docs AND private notes (same ID, a folder on each side)
     ├── two people document one function at once ──► same derived ID ──► same folder + same ID line ──► clean git merge
     └── a teammate clones ──► cache rebuilt ──► shared docs re-attach (ID comment or node.toml)
 ```
@@ -109,7 +112,7 @@ plan_vs/
 │   └── 05-user-controls-and-config.md ............... who controls what; vnoc.toml + local.toml drafts
 │
 ├── 01-decisions/ .................................... WHY
-│   ├── 01-decision-log.md ........................... ✅ VS-D1…D57 · 🟡 VS-P1…P34 · 🔓 VS-O1…O10
+│   ├── 01-decision-log.md ........................... ✅ VS-D1…D66 · 🟡 VS-P1…P35 · 🔓 VS-O1…O10
 │   └── 02-relation-to-old-plan.md ................... plan/ file by file: reuse · change · drop
 │
 ├── 02-technology/ ................................... WITH WHAT (decision level)

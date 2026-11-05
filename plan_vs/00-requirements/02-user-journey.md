@@ -71,7 +71,7 @@ Q3  May V-NOC add ID comments to your code?   (change any time, and per node)
 ```
 
 How call trees load is **not** a question. Lazy is the only mode, and the depth is a setting (F3).
-Then `.vnoc/vnoc.toml` (solo: `local.toml`) and `.vnoc/.gitignore` are written and indexing starts. In a monorepo, setup also proposes one `[[path]]` section per detected package (`pyproject.toml`, `package.json`). Q3 = All → a preview ("312 files will get an ID line") must be confirmed first (FR-21).
+Then `.vnoc/vnoc.toml` (solo: `local.toml`) and `.vnoc/.gitignore` (team: `local/` + `local.toml`; solo: `*`) are written and indexing starts. In a monorepo, setup also proposes one `[[path]]` section per detected package (`pyproject.toml`, `package.json`). Q3 = All → a preview ("312 files will get an ID line") must be confirmed first (FR-21).
 
 ### B3. Hand-written config
 The user writes `.vnoc/vnoc.toml`. Saving it → "Config changed: re-index? [Yes]". A JSON schema gives autocomplete (FR-12). `local.toml` works the same way for personal overrides.
@@ -91,7 +91,7 @@ The user writes `.vnoc/vnoc.toml`. Saving it → "Config changed: re-index? [Yes
 
 ### D1. Attach a doc
 Right-click a node ▸ **Attach doc** ▸ **Shared** or **Private 🔒** (default: shared in team mode, private in solo; the user picks once per doc).
-A Markdown file is created on that side (`nodes/…` or `local/nodes/…`) and opened in a normal VS Code editor tab. The canvas panel shows it rendered, with private ones marked.
+Or from the canvas **doc panel** ([📄 Docs] toggle): **[+ Add doc]**. A Markdown file is created on that side (`nodes/…` or `local/nodes/…`) and opened **in the doc panel**, next to the graph. It's rendered to read and switches to Markdown source with **[✎]**; **[🗑]** removes a doc (trash rule). "Open beside" gives a regular VS Code editor. Private ones are marked 🔒 (VS-D61).
 **Share this doc** / **Make private** move it later (VS-D26).
 
 Under **`on-attach`**, the first doc on an in-scope node also adds its `ID:` line (placed by the driver; Python: in the docstring) (a `WorkspaceEdit`; if the file has unsaved changes, the line joins the buffer and goes out with the user's next save).
@@ -103,7 +103,7 @@ Output isn't stored. **Disabled in Restricted Mode.**
 ### D3. Per-node ID
 Right-click any file / class / function ▸
 
-- **Add permanent ID**: writes one `ID:` line for that node (Python: into its docstring, which is created if missing), in any mode, even `none`. On a pulled-in node it first offers "add this file to the scope?" (VS-D21).
+- **Add permanent ID**: writes one `ID:` line for that node (Python: into its docstring, created if missing; for a **file**, a `# FileID:` comment at the top), in any mode, even `none`. On a pulled-in node it first offers "add this file to the scope?" (VS-D21).
 - **Remove permanent ID**: removes the exact span the driver recorded, **only if its text still matches** (VS-D49). If it doesn't, nothing changes and V-NOC shows you the line. No pattern search, so nothing else in the docstring can be touched. The node keeps its docs (found through `node.toml` now) and gets `id_in_code = "never"`, stored where a teammate's sync will see it (VS-D39).
 - If someone (a docstring rewrite, an AI agent, a teammate) deletes ID lines by hand, the next sync finds the nodes anyway and asks once: **Restore / Keep removed**.
 
@@ -137,11 +137,11 @@ Command Palette ▸ "V-NOC: Settings", or edit `vnoc.toml` (shared) / `local.tom
 | F2 | ID mode → All / On attach | Preview (on a team repo with `all`: "big diff, commit it separately"), then inject, skipping `never` nodes and pulled-in nodes. |
 | F3 | Scope, excludes, **call-tree depth**, **auto / manual sync**, open-time indexing | Re-index of what changed. Documented nodes that leave the scope become pulled-in or Missing, never deleted. |
 | F4 | Rebuild index | `local/cache/` deleted and rebuilt. User data untouched. |
-| F5 | **Team ↔ solo** | Solo → team: `vnoc.toml` is created (preview) and `.gitignore` rewritten; docs stay private until "Share all docs…" (a preview with checkboxes) (VS-D37). Team → solo: `.gitignore` becomes `*`; files already committed stay in history (we say so). |
+| F5 | **Team ↔ solo** | Changes where new docs go, the ID default, and `.vnoc/.gitignore` (`local/` + `local.toml` ↔ `*`) (VS-D58, VS-D63). Sharing a single doc never touches `.gitignore`. Solo → team: `vnoc.toml` is created (preview); docs stay private until "Share all docs…" moves the folders you tick into `nodes/`. Team → solo: shared folders stay shared (moving them would delete them from the repo for teammates; "Make all private…" warns about that). Team → solo: `.gitignore` becomes `*`; files already committed stay in history (we say so). |
 
 ## G. Shares with git
 
-- **Team mode:** `vnoc.toml` and `nodes/` are committed; `local.toml` and `local/` are ignored by `.vnoc/.gitignore`. **Solo:** `.vnoc/.gitignore` is `*`, so `.vnoc/` never shows in `git status`.
+- **Team mode:** `vnoc.toml` and `nodes/` are committed; `local.toml` and `local/` are ignored by `.vnoc/.gitignore`. **Solo:** only the local side exists and `.vnoc/.gitignore` is `*`, so nothing from `.vnoc/` shows in `git status`. **Share / Make private** move a doc or a whole node folder between `local/nodes/` and `nodes/` (VS-D58).
 - The repo's root `.gitignore` is never touched.
 - A teammate clones → their cache is built locally → shared `node.toml` files (and in-code `ID:` lines) find their nodes → same shared docs, plus their own private ones.
 - Two people documented the same function at once → the **same derived ID** → the same folder and the same `ID:` line → git merges it cleanly (VS-D50). Only after a rename on one side do two IDs appear; V-NOC merges them on the next sync (VS-D40).

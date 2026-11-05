@@ -29,7 +29,7 @@ Grouped by area, with gaps left for inserts. ~~Struck~~ rows were dropped in rev
 | FR-15 | Every setting can be changed later and takes effect without restarting VS Code. | M |
 | FR-16 | **`local.toml` overrides `vnoc.toml`** key by key; the settings UI asks "team or just me?" per change. | M |
 | FR-17 | **Sync mode auto / manual** (VS-D22). Manual: changes are counted in the status bar (`12 changed · Sync`). | M |
-| FR-18 | **Team / solo** mode decides `.vnoc/.gitignore` (team: `local/` + `local.toml`; solo: `*`). The repo's root `.gitignore` is never touched. | M |
+| FR-18 | `.vnoc/.gitignore` is written at setup from the mode (team: `local/` + `local.toml`; solo: `*`) and changes **only on a mode switch**, never when a doc is shared or made private (VS-D63). The repo's root `.gitignore` is never touched (VS-D58). | M |
 
 ## 2x: Identity
 
@@ -38,7 +38,7 @@ Grouped by area, with gaps left for inserts. ~~Struck~~ rows were dropped in rev
 | FR-20 | ID modes `on-attach` / `all` / `none`: a project default + `[[path]]` rules (most specific path wins) + per-node `id_in_code`. Default `on-attach` (team), `none` (solo, with a one-line reason) (VS-D42). | M |
 | FR-21 | Any ID operation touching **more than one file** shows a preview and needs confirmation. | M |
 | FR-22 | Rules only add IDs: switching to `none` never removes existing ones. | M |
-| FR-23 | ID syntax and placement are **the driver's job** (VS-D54). Python: an `ID: <id>` line in the def/class docstring, as pylspt does today. v1: no module-level IDs (VS-P34). Folders never get in-code IDs; `__init__.py` is never created or edited (VS-D41). Old V-NOC `ID:` lines are *read* as a migration aid only. | M |
+| FR-23 | ID syntax and placement are **the driver's job** (VS-D54). Python: an `ID: <id>` line in the def/class docstring (as pylspt does today), and a `# FileID: <id>` comment at the top of a file, after shebang/encoding and any leading comment block (VS-D59). Folders never get in-code IDs; `__init__.py` is never created or edited (VS-D41). Old V-NOC `ID:` lines are *read* as a migration aid only. | M |
 | FR-24 | **Per-node Add permanent ID**, any mode, for in-scope nodes. | M |
 | FR-25 | **Per-node Remove permanent ID**: removes the driver's recorded span **only if its current text still matches exactly**; otherwise shows the line and changes nothing; never a pattern search (VS-D49); sets `id_in_code = "never"`; docs stay attached (VS-D43). | M |
 | FR-26 | "Remove IDs in this folder" (exact span per ID, preview, mismatches listed). | S |
@@ -88,13 +88,14 @@ Grouped by area, with gaps left for inserts. ~~Struck~~ rows were dropped in rev
 | # | Requirement | P |
 |---|---|---|
 | FR-50 | Attach any number of Markdown docs to a folder / file / class / function (in scope or pulled in). | M |
-| FR-51 | Docs are `.md` files in `.vnoc/`, edited in a normal editor tab. | M |
-| FR-52 | The canvas side panel renders the selected node's docs, private ones marked. | M |
+| FR-51 | Docs are `.md` files in `.vnoc/`, editable **in the canvas doc panel** (Markdown source, as a view of VS Code's document) and in a normal editor tab (VS-D61). | M |
+| FR-52 | The canvas has a **doc panel** (toggle in the toolbar and on the card's 📄 badge) that shows the selected node's docs from both sides (private ones marked), rendered, with **Add** (shared / private) and **Remove** (trash rule) (VS-D61). | M |
 | FR-53 | Docs on call nodes. | L, confirm |
 | FR-54 | Docs are never deleted by sync. | M |
+| FR-5A | **Code is editable wherever it's shown** (card, zoom dialog, Code tab), as a view of VS Code's document; **⌘S / Ctrl+S** in the canvas saves the focused editor's document (VS-D62). | M |
 | FR-55 | Each doc is **shared** or **private**; Rust decides the file location from that (VS-D24). | M |
 | FR-56 | **Share this doc / Make private** move files between sides (VS-D26). | M |
-| FR-57 | **Solo → team** previews every file that becomes committed before `.gitignore` changes. | M |
+| FR-57 | Sharing / un-sharing **moves** a doc or a node folder between `local/nodes/` and `nodes/` (merging into an existing folder). "Share all docs…" and "Make all private…" preview every folder that moves; the latter warns that teammates lose those docs on commit (VS-D58). | M |
 
 ## 6x: Playground
 

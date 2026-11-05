@@ -11,6 +11,8 @@ Recorded as **VS-D36 – VS-D48**. My review of that doc is section D below.
 **Round 6** (2026-11-05): your replies to section D. Remove ID by exact recorded span; **hash-derived IDs again**; every repo file is untrusted; never delete user writing
 without a click; narrower env-change trigger; one `.vnoc/` per git root; 90/30-day retention; **editable node-card code**. Plus your note: **the driver owns ID placement** (Python: the docstring).
 Recorded as **VS-D49 – VS-D57**.
+**Round 7** (2026-11-05): ULID-style encoding (R13); sharing = moving folders, `.gitignore` never changes; one node can have data on both sides; file IDs as a top comment. Recorded as **VS-D58 – VS-D60**. Then: docs on the canvas (doc panel), code editable everywhere with ⌘S / Ctrl+S, solo `.gitignore` = `*`: **VS-D61 – VS-D63**.
+**Round 8** (2026-11-05): save-hook facts (C8, C23), focus-stack keys via the core (B13), pylspt repo conditions (B14). Recorded as **VS-D64 – VS-D66**.
 
 What's left: answer each open row ✅ / ❌ / a change. Then the decision log moves 🟡 → ✅ and phase 2 starts.
 
@@ -28,15 +30,15 @@ What's left: answer each open row ✅ / ❌ / a change. Then the decision log mo
 | A6 | Docs on call nodes in v1? | later | FR-53 |
 | A7 | Playground in v1, or v1.1? | v1.1 if time is short | FR-60 |
 | A8 | Tree shows **all files** in scope; non-Python files can have docs (`node.toml` only). | ✅ | VS-P21 |
-| A9 | Docs edited in VS Code's own Markdown editor. | ✅ | VS-P11 |
+| ~~A9~~ | ~~Docs in VS Code's own editor~~ → **decided, VS-D61**: a doc panel on the canvas (read, edit, add, remove) | ✅ | |
 | A10 | Speed targets about right? | ✅ | NFR-01..05 |
 | ~~A11~~ | ~~Setup questions~~ → **decided, VS-D47** | ✅ | |
 | ~~A12~~ | ~~Pulled-in / third-party~~ → **decided, VS-D32** | ✅ | |
-| A13 | `project.sharing` (team/solo) can't be overridden in `local.toml`. | ✅ | 00-05 |
+| ~~A13~~ | ~~`project.sharing` can't be overridden locally~~ → moot: sharing no longer changes `.gitignore` (VS-D58) | | |
 | A14 | Driver cleanup after **30 days** unused. | ✅ | 02-07 §3 |
 | ~~A15~~ | ~~N days~~ → **decided, VS-D56**: 90 / 30, configurable | ✅ | |
 | ~~A16~~ | ~~Node card code read-only?~~ → **decided, VS-D57**: editable, as a view of VS Code's document | ✅ | |
-| A17 | **v1: no module-level ID for `.py` files** (found through `node.toml` only), since pylspt places IDs in def/class docstrings only? | ✅ | VS-P34 |
+| ~~A17~~ | ~~No module-level ID in v1?~~ → **decided, VS-D59**: a `# FileID:` comment at the top | ✅ | |
 
 ## B. Design proposals (you can just say "OK")
 
@@ -51,8 +53,8 @@ What's left: answer each open row ✅ / ❌ / a change. Then the decision log mo
 | B8 | Rust writes directly only to the cache, `node.toml` files and `.gitignore`; everything a user can have open goes through `WorkspaceEdit` | VS-P24 |
 | B11 | One writer per project (lock in `local/cache/`) | VS-P16 |
 | B12 | Platform VSIX on Marketplace **and** Open VSX from the first release | VS-P13 |
-| B13 | Focus stack stores permanent IDs or location keys (rewritten on rename), saved with `vscode.setState` | 02-03 |
-| B14 | pylspt stays its own repo; `drivers/python` pins it as a git dependency | 02-07 §1 |
+| ~~B13~~ | ~~Focus stack rewrites keys from rename events~~ → **decided, VS-D64**: the core's `key_moves` table translates saved keys on restore; permanent IDs preferred | |
+| ~~B14~~ | ~~pylspt stays its own repo~~ → **decided, VS-D65**: no dependency on `vnoc-driver-protocol`, adapter in `drivers/python`, pinned by `rev`, `[patch]` for dev | |
 | B15 | The core embeds a *list* of minisign public keys (for key rotation) | 02-07 §3 |
 | ~~B16~~ | ~~`anchor.toml` / `state.toml` split~~ → **superseded by VS-D39** (one `node.toml`) | |
 | ~~B17~~ | ~~Node-card code read-only~~ → **superseded by VS-D57** (editable) | |
@@ -60,6 +62,7 @@ What's left: answer each open row ✅ / ❌ / a change. Then the decision log mo
 | ~~B19~~ | ~~Expired private archives to the trash~~ → **decided, VS-D52** | |
 | ~~B20~~ | ~~`# vnoc:` comment placement~~ → **superseded by VS-D54** (the driver owns placement; Python: docstring) | |
 | ~~B21~~ | ~~Roots in one repo share one `.vnoc/`~~ → **decided, VS-D55** | |
+| ~~B22~~ | ~~`.git/info/exclude` in solo~~ → **decided, VS-D63**: solo `.vnoc/.gitignore` = `*` | |
 
 ## C. Facts to verify in phase 2 (spikes, not opinions) **[check]**
 
@@ -72,7 +75,7 @@ What's left: answer each open row ✅ / ❌ / a change. Then the decision log mo
 | C5 | Which stores Cursor / Windsurf install from | FR-90. |
 | C6 | `#:schema` support in TOML extensions (Even Better TOML, Tombi) | FR-12, VS-D47. |
 | C7 | VS Code's MCP registration API; opencode / pi config | VS-O1. |
-| C8 | **Save participant time budget** for `onWillSaveTextDocument.waitUntil` | FR-2B. |
+| ~~C8~~ | ~~Save participant time budget~~ → **answered**: ~1.5 s shared by all listeners; edits dropped if the document changed; misbehaving listeners skipped → VS-D66 (precomputed edits) | FR-2B. |
 | C9 | `vscode.git` API: HEAD change events, "rebase/merge in progress", `git.enabled = false` | VS-D15, VS-P28. |
 | C10 | Can save-time IDs work in **manual sync** mode? | VS-D22. |
 | C11 | macOS quarantine / Windows Defender on downloaded driver binaries | VS-D29. |
@@ -84,9 +87,10 @@ What's left: answer each open row ✅ / ❌ / a change. Then the decision log mo
 | C17 | Per-function parse-error detection from the driver | VS-D31. |
 | C18 | Watching `.vnoc/` when it sits **above** the opened folder (`RelativePattern` on the git root); does Workspace Trust cover it? | VS-D36. |
 | C19 | `gix`: "last commit that changed path X" + reading the file at that commit, speed on big repos, behaviour on shallow clones | VS-D44 fresh clone. |
-| C20 | pylspt: `plan_ids` fed with given IDs; reading returns each `ID:`'s **exact span + text**; the remove edit inside a user-written docstring leaves it valid (and removes a V-NOC-only `"""ID: x"""` whole) | VS-D49, VS-D54. |
+| C20 | pylspt: the new `# FileID:` writer (after shebang / encoding / leading comment block); `plan_ids` fed with given IDs; reading returns each `ID:`'s **exact span + text**; the remove edit inside a user-written docstring leaves it valid (and removes a V-NOC-only `"""ID: x"""` whole) | VS-D49, VS-D54. |
 | C21 | Monaco inside a webview: CSP + web workers, bundle size, theme; the slice-edit version race (typing in the card and a regular editor at once) | VS-D57. |
 | C22 | Which `pyproject.toml` sections count as "dependencies" across tools (`[project]`, `[dependency-groups]`, `[tool.poetry]`, `[tool.uv]`), and which lockfiles | VS-D53. |
+| C23 | ✅ `document.save()` reports `Manual` (API docs). **Still to test:** the `cmd+s` / `ctrl+s` binding with `when: activeWebviewPanelId == 'vnoc.canvas'` really wins while the canvas has focus (VS Code then runs only our command), and the webview always reports the right document to save | VS-D62, VS-D66. |
 
 ## D. My review of the round-5 storage doc
 
@@ -111,7 +115,7 @@ Most of it is solid and fits the earlier rounds. These are the points worth a se
 
 | # | Finding | What I did |
 |---|---|---|
-| R13 | **Base32 bit layout matters for sharding.** 16 bytes = 128 bits = 25.6 characters. Plain RFC 4648 base32 puts the 2 spare bits in the *last* character (only 8 possible values → 256 shards). Encoding like a ULID puts them in the *first* character, so the last two are full (1,024 shards). | ✏️ 02-05 §1: encode with the `ulid` crate's encoder. |
+| R13 | **Base32 bit layout matters for sharding.** 16 bytes = 128 bits = 25.6 characters. Plain RFC 4648 base32 puts the 2 spare bits in the *last* character (only 8 possible values → 256 shards). Encoding like a ULID puts them in the *first* character, so the last two are full (1,024 shards). | ✏️ 02-05 §1. → **Round 7: VS-D60**, agreed. |
 | R14 | **A docstring ID is part of `__doc__`**: it shows in `help()`, IDE hovers and Sphinx/pdoc output. The pasted D5 point ("a comment doesn't affect `__doc__`") doesn't hold for docstring IDs. The old V-NOC worked this way too. | ✏️ Written down as a trade-off in 02-05 §2. No change unless you want one. |
 
 Next: [`02-phase-plan.md`](02-phase-plan.md)

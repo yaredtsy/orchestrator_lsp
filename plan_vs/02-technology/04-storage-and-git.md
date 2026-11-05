@@ -2,7 +2,7 @@
 
 Decisions: VS-D36 (three places), VS-D37 (shared vs local, solo = local only), VS-D38 (node folders), VS-D39 (one `node.toml`),
 VS-D40 (two IDs on one node), VS-D35 + VS-D52 (Remove and the trash), VS-D46 + VS-D53 (the cache), VS-D50 (hash-derived IDs), VS-D51 (repo files are untrusted),
-VS-D55 (one `.vnoc/` per git root), VS-P24 (who writes what).
+VS-D55 (one `.vnoc/` per git root), VS-D58 (moving between sides), VS-P24 (who writes what).
 Round 5 (2026-11-05) replaced this file's earlier `anchor.toml` / `state.toml` / `<slug>--<id>` design; round 6 brought back hash-derived IDs. The old rows are marked ⤴ in the decision log.
 
 ## 1. Where data lives (VS-D36)
@@ -33,7 +33,7 @@ Round 5 (2026-11-05) replaced this file's earlier `anchor.toml` / `state.toml` /
 │   │   └── my-todo.md                    (no node.toml here: this node's one node.toml is on the shared side)
 │   ├── cache/                            ── MACHINE DATA ──  index.sqlite (+ -wal, -shm), lock
 │   └── trash/<date>/                     Remove fallback when there's no system trash (VS-D35)
-└── .gitignore                   written by V-NOC (team: `local/` + `local.toml`; solo: `*`)
+└── .gitignore                   written by V-NOC at setup: team `local/` + `local.toml`; solo `*` (§3)
 ```
 
 **Where `.vnoc/` goes:**
@@ -66,24 +66,46 @@ Both sides use **the same layout**. Rust reads both and merges them:
 - **The test for "shared":** if a teammate's V-NOC would act differently without this fact, it's shared.
   Example: `id_in_code = "never"` under a shared ID mode is shared. Without it, the teammate's sync would put the ID back.
 - **Placement is enforced in the Rust write path, not in the UI** (the 🦀 note below).
-- **"Share this doc" / "Make private"** move files between sides. Because the doc may be open in an editor, the move is a `WorkspaceEdit.renameFile` (VS-P24).
+- **One node can have data on both sides.** Shared docs in `nodes/7K/<id>/`, my private notes in `local/nodes/7K/<id>/`: same ID, same folder name, two parents.
+  The canvas shows them together (private ones 🔒). Only one of the two folders holds the node's `node.toml` (§5).
 
-### Team mode and solo mode
+### Moving between sides = moving the folder, never editing `.gitignore` (VS-D58, VS-D63)
+
+**`.vnoc/.gitignore` is written at setup, from the mode:**
+
+```gitignore
+# team mode                 # solo mode
+local/                      *          ← ignores all of .vnoc/, the .gitignore itself included,
+local.toml                             so nothing from .vnoc/ shows in git status
+```
+
+**Sharing and un-sharing never touch it.** Whether something is committed depends only on **which parent folder it's in**: `nodes/` is committed, `local/nodes/` isn't.
+So sharing or un-sharing is a **move**. Only an explicit **mode switch** rewrites `.gitignore` (below).
+
+| Action | Moves | With |
+|---|---|---|
+| **Share this doc** | one file `local/nodes/7K/<id>/x.md` → `nodes/7K/<id>/x.md` | `WorkspaceEdit.renameFile` (the doc may be open, VS-P24) |
+| **Share this node** | the whole folder `local/nodes/7K/<id>/` → `nodes/7K/<id>/` | if the target folder exists, the files are **merged into it**; a same-name clash → `notes (2).md` + `vscode.diff` |
+| **Make private** (doc or node) | the other way | same |
+| `node.toml` | follows the §5 rule after each move | automatic |
+
+**Team mode and solo mode** decide where new things go by default, the ID default, and the `.gitignore` written at setup:
 
 | | Team | **Solo ("just me")** |
 |---|---|---|
-| What V-NOC creates | both sides | **only the local side**: `local.toml`, `local/` (no `vnoc.toml`, no `nodes/`) |
-| `.vnoc/.gitignore` | `local/` and `local.toml` | `*` (also ignores the `.gitignore` itself, so nothing from `.vnoc/` shows in `git status`) |
-| Default ID mode | `on-attach` | **`none`** (ID comments in source would be committed and seen by teammates) |
+| New docs go to | `nodes/` (shared) | `local/nodes/` (private). V-NOC creates **only the local side**: `local.toml`, `local/` |
+| Config | `vnoc.toml` (+ my `local.toml`) | `local.toml` only |
+| Default ID mode | `on-attach` | **`none`** (in-code IDs would be committed with the source and seen by teammates) |
+| `.vnoc/.gitignore` | `local/` + `local.toml` | `*` (VS-D63) |
+| In `git status` | `vnoc.toml`, `nodes/`, `.vnoc/.gitignore` | **nothing** from `.vnoc/` |
 
-**Why solo is local-only (your round-5 note).** With `*` in `.gitignore`, git would ignore a solo user's shared side anyway. Writing everything to `local/` adds one more property:
-**switching to team mode never turns anything into a commit by itself**.
+**Switching modes:**
 
-**Switching:**
-
-- **Solo → team:** V-NOC creates `vnoc.toml` (seeded from `local.toml`'s team-level keys, shown in a preview) and rewrites `.gitignore`. Your docs stay private.
-  Then it offers **"Share all docs…"**, which opens a preview of every file that would become committed, with checkboxes. Nothing is shared without that confirmation.
-- **Team → solo:** `.gitignore` becomes `*`. Files already committed stay in git history. We say so and offer the `git rm --cached` command to copy; we don't run git commands that change the index.
+- **Solo → team:** V-NOC creates `vnoc.toml` (seeded from `local.toml`'s team-level keys, shown in a preview) and rewrites `.gitignore` from `*` to `local/` + `local.toml`.
+  Everything you have is under `local/`, so it stays ignored: nothing becomes committable by itself. Your docs stay private.
+  Then it offers **"Share all docs…"**: a preview of every folder that would move to `nodes/` (and so become committed), with checkboxes.
+- **Team → solo:** `.gitignore` becomes `*` (files git already tracks stay tracked; `.gitignore` doesn't untrack them). New docs default to private. Existing shared folders **stay where they are**, because they belong to the team. Moving them to `local/` would
+  delete them from the repo at your next commit, and teammates would lose them. "Make all private…" exists but warns exactly that, with a preview.
 
 > **🦀 Rust note: making the rules unbreakable with types.**
 > Give the write path no way to say "just write this file there":
@@ -203,6 +225,7 @@ same folder and the same `ID:` line, and git merges that cleanly. **What's left*
 | `expansions(fn_key, ctx_key, version)`, `edges(fn_key, ctx_key, ord, callee_key, callee_ctx_key, call_line)` | lazy call-tree layers |
 | `expansion_deps(fn_key, ctx_key, version, file_path, file_hash)`, `callers` | what each expansion depends on |
 | parsed `.vnoc` files, keyed by mtime | so startup doesn't re-read every `node.toml` |
+| `key_moves(old_key, new_key, at_sync)` | location-key renames seen by sync, so saved canvas tabs can translate their keys when restored (VS-D64). Chains are followed (`a → b → c`); rows older than `cache_days` are dropped |
 | `meta(last_synced_head, …)` | HEAD awareness (VS-D34) |
 
 **Validation, not deletion:**

@@ -32,8 +32,32 @@ vnoc/                                  (today: vnoc_playground)
     └── release-driver.yml             tag driver-python-v0.3.0 → signed archives + new manifest
 ```
 
-**pylspt stays its own repo** 🟡. `drivers/python` depends on it as a git dependency pinned to a commit, so pylspt keeps its own
-history and tests, and the monorepo only holds the thin wrapper (protocol ↔ pylspt calls).
+**pylspt stays its own repo (VS-D65).** `drivers/python` depends on it as a git dependency, so pylspt keeps its own history and tests, and the monorepo only holds
+the thin wrapper. Three conditions:
+
+1. **pylspt must not depend on `vnoc-driver-protocol`** (or any other V-NOC crate). It keeps its own Rust API and types.
+2. **The adapter in `drivers/python` translates** between the driver protocol and pylspt's API. A protocol change therefore touches only the monorepo (the protocol
+   crate, the core, the adapter) in one commit, and never forces a pylspt release.
+3. **Pinned by `rev`** (an exact commit), never a branch. For development, a **`[patch]`** points it at a local checkout.
+
+```
+vnoc-driver-protocol  ◄── drivers/python (adapter: protocol ⇄ pylspt API) ──► pylspt (own repo, knows nothing about V-NOC)
+```
+
+> **🦀 Rust note: pinning a git dependency, and `[patch]` for local work.**
+> ```toml
+> # drivers/python/Cargo.toml — what CI and releases build
+> [dependencies]
+> pylspt = { git = "https://github.com/yaredtsy/pylspt", rev = "3f2a9c1" }    # exact commit; `branch = "main"` would drift
+> ```
+> ```toml
+> # .cargo/config.toml at the monorepo root — gitignored, so it only affects your machine
+> [patch."https://github.com/yaredtsy/pylspt"]
+> pylspt = { path = "../pylspt" }          # build against your working copy while changing both
+> ```
+> `[patch]` swaps a dependency's *source* everywhere in the build without touching any `Cargo.toml`. Putting it in a **gitignored** `.cargo/config.toml` (Cargo supports
+> `[patch]` there) rather than in the committed root `Cargo.toml` means CI can never accidentally build against a path that only exists on your laptop.
+> When both changes are done: push pylspt, bump `rev`, commit. `Cargo.lock` records the commit too.
 
 One repo pays off most for the **editor ↔ core** protocol: a field added in `vnoc-protocol` changes the Rust side, the generated TS types,
 the extension and the webview in **one commit**, and CI checks them together. The **core ↔ driver** protocol is versioned on purpose

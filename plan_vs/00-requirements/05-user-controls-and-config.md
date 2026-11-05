@@ -29,7 +29,7 @@ Decision: VS-D47 (configuration). Four places, chosen by **"who should this appl
 version = 1
 
 [project]
-sharing = "team"                  # "team" | "solo"   → what .vnoc/.gitignore contains (VS-D25)
+sharing = "team"                  # "team" | "solo"   → where NEW docs go, the ID default, .vnoc/.gitignore (VS-D58, VS-D63)
 
 [index]
 on_open = true                    # index when the folder opens
@@ -79,8 +79,8 @@ sync = "manual"                   # I prefer to sync by hand on this big repo
 depth = 5
 ```
 
-Any key may appear here except `project.sharing`. That one has to be a team decision; changing it locally would make my `.gitignore` disagree with everyone else's.
-In **solo** mode there's no `vnoc.toml`, so `local.toml` holds everything (VS-D37).
+Any key may appear here. In **solo** mode there's no `vnoc.toml`, so `local.toml` holds everything, including `project.sharing = "solo"` (VS-D37).
+In team mode, "my new docs default to private" is the personal setting `vnoc.docs.defaultSide`, not a `local.toml` override of `sharing`.
 
 ## How the files are read and written
 
@@ -105,8 +105,8 @@ In **solo** mode there's no `vnoc.toml`, so `local.toml` holds everything (VS-D3
 ## Setup asks only three things (VS-D47, confirms VS-P26)
 
 1. **What to index?** (the scope; call trees are always lazy, so there's no eager/lazy question)
-2. **Team or just me?** (team → both sides; just me → local only, `.gitignore` = `*`)
-3. **IDs in code?** ○ On attach (team default) ○ All ○ None (solo default). The question shows what an ID looks like in this language (Python: an `ID:` line in the docstring).
+2. **Team or just me?** (team → new docs shared by default; just me → only the local side is created, `.gitignore` = `*`)
+3. **IDs in code?** ○ On attach (team default) ○ All ○ None (solo default). The question shows what an ID looks like in this language (Python: an `ID:` line in the docstring; a `# FileID:` comment at the top of a file).
 
 Plus, in a monorepo: "Found 3 packages. Add a `[[path]]` section for each?" (pre-ticked, no new question to think about).
 
@@ -128,7 +128,7 @@ Proxy: not our own setting. The extension passes VS Code's `http.proxy` / `http.
 
 | Action | Writes | Allowed when |
 |---|---|---|
-| Add permanent ID | 1 `ID:` line placed by the driver (Python: in the docstring) via `WorkspaceEdit` + `node.toml` (`id_in_code = "yes"`) | trusted; node in scope (otherwise "add to scope?"); a node the driver can carry (Python v1: class, function) |
+| Add permanent ID | 1 `ID:` line placed by the driver (Python: in the docstring) via `WorkspaceEdit` + `node.toml` (`id_in_code = "yes"`) | trusted; node in scope (otherwise "add to scope?"); a node the driver can carry (Python v1: file, class, function) |
 | Remove permanent ID | removes the driver's recorded span **only if its text still matches exactly**, else shows the line (VS-D49); `id_in_code = "never"` | trusted; the node has an in-code ID |
 | IDs for this folder and below ▸ All / On attach / None / Inherit | a `[[path]]` section (Team / Only me toggle) | trusted |
 | Remove IDs in this folder | exact-span removals, with a preview; `never` on each; mismatches listed | trusted |
