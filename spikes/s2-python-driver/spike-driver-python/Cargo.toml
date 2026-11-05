@@ -17,7 +17,11 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 # A small `pylspt::facade` (open project, outline(file), call_tree(...)) would remove this.
 ruff_db = { path = "../../../../pylspt/vendor/ruff/crates/ruff_db", default-features = false, features = ["os"] }
 ty_project = { path = "../../../../pylspt/vendor/ruff/crates/ty_project", default-features = false, features = ["zstd"] }
+ruff_python_parser = { path = "../../../../pylspt/vendor/ruff/crates/ruff_python_parser" }
+ruff_python_ast = { path = "../../../../pylspt/vendor/ruff/crates/ruff_python_ast" }
+ruff_text_size = { path = "../../../../pylspt/vendor/ruff/crates/ruff_text_size" }
 ruff_source_file = { path = "../../../../pylspt/vendor/ruff/crates/ruff_source_file" }
+blake3 = "1.8.7"
 
 [profile.release]
 strip = true

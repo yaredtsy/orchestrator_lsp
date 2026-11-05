@@ -1,0 +1,74 @@
+{
+  "name": "vnoc-spike-s3",
+  "displayName": "V-NOC spike S3",
+  "version": "0.0.1",
+  "publisher": "vnoc-spike",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "vnoc.s3.addId",
+        "title": "V-NOC S3: Add permanent IDs"
+      }
+    ],
+    "configuration": {
+      "title": "V-NOC S3",
+      "properties": {
+        "vnocS3.driverPath": {
+          "type": "string",
+          "default": "",
+          "description": "SPIKE ONLY: path to spike-driver-python."
+        },
+        "vnocS3.autoIds": {
+          "type": "boolean",
+          "default": false,
+          "description": "Add IDs inside the user's own save (onWillSaveTextDocument)."
+        },
+        "vnocS3.debounceMs": {
+          "type": "number",
+          "default": 300
+        },
+        "vnocS3.slowHookMs": {
+          "type": "number",
+          "default": 0,
+          "description": "Test: make the save hook sleep this long."
+        },
+        "vnocS3.testDelayMs": {
+          "type": "number",
+          "default": 0,
+          "description": "Test: pause between planning and applying (to simulate typing)."
+        },
+        "vnocS3.computeAtSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Test: compute the plan inside the save hook instead of ahead of time."
+        },
+        "vnocS3.hookBudgetMs": {
+          "type": "number",
+          "default": 800,
+          "description": "Hard budget inside the save hook. VS Code drops a listener for good after 4 saves slower than 1500 ms, so we answer [] after this long. 0 = no budget (test only)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "test": "tsc -p . && node out/test/runTest.js"
+  },
+  "dependencies": {
+    "@noble/hashes": "1.8.0",
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/test-electron": "^2.4.0",
+    "mocha": "^10.0.0",
+    "typescript": "^5.6.0"
+  }
+}

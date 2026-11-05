@@ -1,0 +1,251 @@
+{
+  "oneUndoRestoresBuffer": true,
+  "undoLeftover": null,
+  "syntaxErrorSkipped": [
+    {
+      "column": 0,
+      "line": 5,
+      "reason": "syntax error inside this def"
+    }
+  ],
+  "typingDuringPlan": {
+    "dropped": 1,
+    "attempts": 2,
+    "applied": true
+  },
+  "typingDuringBoth": {
+    "dropped": 2,
+    "applied": false
+  },
+  "precomputedSave": {
+    "reason": "Manual",
+    "ms": 0.2,
+    "used": true,
+    "edits": 4
+  },
+  "saveBeforeDebounce": {
+    "used": false,
+    "ms": 0.1
+  },
+  "saveReasonsSeen": [
+    "Manual"
+  ],
+  "timings": [
+    {
+      "size": "small",
+      "file": "io.py",
+      "lines": 100,
+      "bytes": 3582,
+      "defsGettingIds": 4,
+      "plan_ms": {
+        "p50": 0.7,
+        "p95": 1.3
+      },
+      "outline_ms_p50": 0.3,
+      "planIds_ms_p50": 0.4,
+      "driver_internal_ms_p50": 0.1,
+      "hook_precomputed_ms": {
+        "p50": 0.1,
+        "p95": 0.2
+      },
+      "hook_atSave_ms": {
+        "p50": 1,
+        "p95": 8.5
+      },
+      "extra_hop_serialization_ms": 0,
+      "headroom_ms_if_computed_at_save": 1491.5
+    },
+    {
+      "size": "medium",
+      "file": "random.py",
+      "lines": 997,
+      "bytes": 34682,
+      "defsGettingIds": 38,
+      "plan_ms": {
+        "p50": 2.5,
+        "p95": 9.4
+      },
+      "outline_ms_p50": 0.9,
+      "planIds_ms_p50": 1.6,
+      "driver_internal_ms_p50": 0.5,
+      "hook_precomputed_ms": {
+        "p50": 0.1,
+        "p95": 0.2
+      },
+      "hook_atSave_ms": {
+        "p50": 2.9,
+        "p95": 6.4
+      },
+      "extra_hop_serialization_ms": 0.1,
+      "headroom_ms_if_computed_at_save": 1493.4
+    },
+    {
+      "size": "large",
+      "file": "turtle.py",
+      "lines": 4208,
+      "bytes": 146361,
+      "defsGettingIds": 240,
+      "plan_ms": {
+        "p50": 10.6,
+        "p95": 33.3
+      },
+      "outline_ms_p50": 3.1,
+      "planIds_ms_p50": 7.4,
+      "driver_internal_ms_p50": 2.9,
+      "hook_precomputed_ms": {
+        "p50": 0.2,
+        "p95": 0.4
+      },
+      "hook_atSave_ms": {
+        "p50": 11.6,
+        "p95": 51
+      },
+      "extra_hop_serialization_ms": 0.6,
+      "headroom_ms_if_computed_at_save": 1447.9
+    }
+  ],
+  "slowHookWithBudget": [
+    {
+      "save": 1,
+      "saveMs": 813,
+      "idsOnDisk": false
+    },
+    {
+      "save": 2,
+      "saveMs": 814,
+      "idsOnDisk": false
+    },
+    {
+      "save": 3,
+      "saveMs": 813,
+      "idsOnDisk": false
+    },
+    {
+      "save": 4,
+      "saveMs": 813,
+      "idsOnDisk": false
+    },
+    {
+      "save": 5,
+      "saveMs": 817,
+      "idsOnDisk": false
+    },
+    {
+      "save": 6,
+      "saveMs": 813,
+      "idsOnDisk": false
+    },
+    {
+      "save": 7,
+      "saveMs": 819,
+      "idsOnDisk": false
+    },
+    {
+      "save": 8,
+      "saveMs": 813,
+      "idsOnDisk": false
+    }
+  ],
+  "slowHookNoBudget": [
+    {
+      "save": 1,
+      "saveMs": 1517,
+      "idsOnDisk": false
+    },
+    {
+      "save": 2,
+      "saveMs": 1525,
+      "idsOnDisk": false
+    },
+    {
+      "save": 3,
+      "saveMs": 1522,
+      "idsOnDisk": false
+    },
+    {
+      "save": 4,
+      "saveMs": 1512,
+      "idsOnDisk": false
+    },
+    {
+      "save": 5,
+      "saveMs": 12,
+      "idsOnDisk": false
+    },
+    {
+      "save": 6,
+      "saveMs": 8,
+      "idsOnDisk": false
+    }
+  ],
+  "removeMismatch": [
+    {
+      "id": "ABC",
+      "reason": "the recorded text is not in the file any more",
+      "shown": {
+        "line": 0,
+        "text": "# FileID: ABC  (keep!)"
+      }
+    }
+  ],
+  "removeDefIdForms": [
+    {
+      "form": "def a():",
+      "exact": true
+    },
+    {
+      "form": "def b():",
+      "exact": true
+    },
+    {
+      "form": "def c():",
+      "exact": true
+    },
+    {
+      "form": "def d():",
+      "exact": true
+    },
+    {
+      "form": "class K:",
+      "exact": true
+    }
+  ],
+  "trashDirtyFileFollows": {
+    "followed": true,
+    "stillDirty": true,
+    "textKept": true
+  },
+  "trashWatcherEvents": {
+    "count": 27,
+    "events": [
+      "c .vnoc",
+      "c nodes",
+      "c n1",
+      "c notes.md",
+      "c sub",
+      "c a.md",
+      "c ünï cøde 文 x.md",
+      "c .vnoc",
+      "c local",
+      "c trash",
+      "c 2026-11-05T20-00-58-988Z_n1",
+      "c nodes",
+      "c n1",
+      "c notes.md",
+      "d notes.md",
+      "c sub",
+      "c a.md",
+      "c ünï cøde 文 x.md",
+      "c trashed.toml",
+      "d a.md",
+      "d ünï cøde 文 x.md",
+      "c notes.md",
+      "d notes.md",
+      "c a.md",
+      "c ünï cøde 文 x.md",
+      "d a.md",
+      "d ünï cøde 文 x.md"
+    ]
+  },
+  "trashRemoveMs": 162.4
+}

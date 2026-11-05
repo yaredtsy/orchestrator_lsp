@@ -83,7 +83,7 @@ What's left: answer each open row ✅ / ❌ / a change. Then the decision log mo
 | C13 | HTTP client with proxy + rustls (`ureq` vs `reqwest`), and `http.noProxy` | VS-D29.6. |
 | C14 | `gix`: `is_ancestor` speed on big histories; reading a path from every local branch tip; shallow clones | VS-D34. |
 | C15 | Opening a library file **read-only** | VS-D32. |
-| C16 | Detecting "no system trash" **before** deleting; `trash` crate on Linux without a desktop | VS-D35. |
+| C16 | ~~Detecting "no system trash"~~ → **VS-D70: no system trash.** Now: moving files (and whole node folders) within `.vnoc/` on each OS, with open editors and Git watching them. Spike S3 checks macOS only. | VS-D70. |
 | C17 | Per-function parse-error detection from the driver | VS-D31. |
 | C18 | Watching `.vnoc/` when it sits **above** the opened folder (`RelativePattern` on the git root); does Workspace Trust cover it? | VS-D36. |
 | C19 | `gix`: "last commit that changed path X" + reading the file at that commit, speed on big repos, behaviour on shallow clones | VS-D44 fresh clone. |

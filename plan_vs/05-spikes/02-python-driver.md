@@ -92,7 +92,11 @@ Linux and Windows not measured. Note `panic = "abort"`: a panic in any worker th
 4. **Logging:** with no filter, ty/salsa trace-log every query (43 MB for one run, which also ruined the first timings). The driver now filters (`VNOC_LOG`, default `warn` + our `info`).
 5. **No external cancel flag in pylspt** (only `Limits::deadline`, 10 s). A cancelled request's answer is dropped but a running solve is not stopped. Deferred with pagination (VS-D69).
 6. **`lsp-server` enforces the LSP handshake:** a request before `initialized` ends the driver. Fine, but the core must always send `initialized`.
-7. **Still open (second pass):** C11 (macOS quarantine / Windows Defender), C12 (lock crate, `data_local_dir`), copy-on-first-run (step 7).
+7. **Still open (second pass):** C11, C12, copy-on-first-run (step 7).
+   - **C11 scope (macOS first, by hand):** (a) the browser-download + `vnoc driver install <file>` path, where quarantine applies; (b) the core's own HTTP download, which should carry
+     **no** quarantine attribute (confirm with `xattr`); (c) the same two on Windows later: Mark-of-the-Web, SmartScreen, Defender's first-run scan delay.
+   - **C4 addition: macOS arm64 binaries must be at least ad-hoc signed, or the OS kills them on launch.** If CI cross-compiles from Linux, sign with `rcodesign`, or build on macOS runners.
+     Check this for the binaries inside the v1 VSIX too, not only for downloaded drivers.
 
 
 Next: [`03-edits-and-saving.md`](03-edits-and-saving.md)

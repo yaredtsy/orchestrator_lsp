@@ -16,6 +16,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
+mod text_ops;
+
 use anyhow::{Context, anyhow};
 use lsp_server::{Connection, ErrorCode, Message, Request, RequestId, Response};
 use pylspt::db::{open, open_project};
@@ -103,7 +105,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-/// `initialize { protocol: 1 }` -> `{ protocol, name, version }`. A wrong protocol is refused with a reason.
+/// `initialize { protocol: 1 }` -> `{ protocol, name, version, capabilities: {} }` (the empty `capabilities` keeps stock LSP clients happy). A wrong protocol is refused with a reason.
 fn handshake(conn: &Connection) -> anyhow::Result<()> {
     let (id, params) = conn.initialize_start()?;
     let asked = params.get("protocol").and_then(Value::as_u64);
@@ -112,7 +114,7 @@ fn handshake(conn: &Connection) -> anyhow::Result<()> {
         conn.sender.send(Message::Response(Response::new_err(id, ErrorCode::InvalidRequest as i32, msg.clone())))?;
         return Err(anyhow!(msg));
     }
-    conn.initialize_finish(id, json!({ "protocol": PROTOCOL, "name": "python", "version": env!("CARGO_PKG_VERSION") }))?;
+    conn.initialize_finish(id, json!({ "protocol": PROTOCOL, "name": "python", "version": env!("CARGO_PKG_VERSION"), "capabilities": {} }))?;
     Ok(())
 }
 
@@ -155,6 +157,10 @@ fn db_for(dbs: &Dbs, root: &str) -> anyhow::Result<ProjectDatabase> {
 
 fn handle(req: &Request, dbs: &Dbs) -> anyhow::Result<Value> {
     let p = &req.params;
+    // S3: requests that carry `text` (the unsaved buffer) need no project database and no file on disk.
+    if let Some(text) = p.get("text").and_then(Value::as_str) {
+        return text_ops::handle(&req.method, text, p);
+    }
     let db = db_for(dbs, str_param(p, "root")?)?;
     let file_path = utf8_path(str_param(p, "file")?)?;
     let file_path = SystemPath::from_std_path(&file_path).ok_or_else(|| anyhow!("file is not UTF-8"))?;
@@ -192,7 +198,7 @@ fn handle(req: &Request, dbs: &Dbs) -> anyhow::Result<Value> {
 
 /// Sets `has_syntax_error` on every def whose line range contains an error line.
 /// Returns whether this subtree contains one, so parents are marked too.
-fn mark_errors(nodes: &mut Value, errors: &[(usize, String)]) -> bool {
+pub(crate) fn mark_errors(nodes: &mut Value, errors: &[(usize, String)]) -> bool {
     let mut any = false;
     for n in nodes.as_array_mut().into_iter().flatten() {
         let pos = &n["position"];

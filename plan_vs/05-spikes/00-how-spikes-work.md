@@ -19,7 +19,7 @@ Each one also teaches one piece of VS Code extension work end to end, so togethe
 |---|---|---|---|---|
 | [S1 hello core](01-hello-core.md) | extension basics, the Rust sidecar, webviews, trust | B5, C3, C6, C18 | 2 days | — |
 | [S2 Python driver](02-python-driver.md) | the driver process, pylspt behind an adapter | C1, C2, C4, C11, C12, C17, C22 | 3 days | S1 |
-| [S3 edits and saving](03-edits-and-saving.md) | `WorkspaceEdit`, save hooks, trash | B8, C10, C16, C20 (+ confirms C8) | 2 days | S1 |
+| [S3 edits and saving](03-edits-and-saving.md) | `WorkspaceEdit`, save hooks, V-NOC trash | B8, C10, C16, C20 (+ confirms C8) | 2 days | S1 |
 | [S4 git and matching](04-git-and-matching.md) | gix, HEAD awareness, the matching ladder | B6, C9, C14, C19, VS-O10 | 3 days | S1 |
 | [S5 canvas editors](05-canvas-editors.md) | Monaco in a webview, document views, ⌘S | C15, C21, C23 | 2 days | S1 |
 
