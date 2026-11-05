@@ -1,0 +1,45 @@
+{
+  "name": "vnoc-spike-s1",
+  "displayName": "V-NOC spike S1",
+  "version": "0.0.1",
+  "publisher": "vnoc-spike",
+  "engines": { "vscode": "^1.90.0" },
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Restricted Mode ignores vnoc.server.path.",
+      "restrictedConfigurations": ["vnoc.server.path"]
+    }
+  },
+  "contributes": {
+    "commands": [
+      { "command": "vnoc.s1.ping", "title": "V-NOC S1: Ping core" },
+      { "command": "vnoc.s1.openCanvas", "title": "V-NOC S1: Open canvas" }
+    ],
+    "configuration": {
+      "title": "V-NOC S1",
+      "properties": {
+        "vnoc.server.path": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the spike-core binary (ignored in Restricted Mode)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.90.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}

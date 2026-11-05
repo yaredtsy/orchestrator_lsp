@@ -41,6 +41,17 @@
 
 ## Findings
 
-*(empty until S1 runs)*
+*Partly done (2026-11-05). Code is built and compiles; GUI checks are still open.*
+
+| Measure | Result |
+|---|---|
+| `spike-core` release binary | 1.05 MB, **0.87 MB stripped** (`lsp-server` + `tracing-subscriber`) |
+| Core alone: spawn → initialize → ping → shutdown | ~3 ms |
+| Webview bundle (React + xyflow) | JS 335 KB (109 KB gzip) + CSS 16 KB |
+| Extension bundle (with `vscode-languageclient`) | 800 KB, unminified |
+| `cargo clippy` with `deny(print_stdout)` | clean |
+
+Still to check by hand (see `spikes/s1-hello-core/README.md`): time to first pong inside VS Code, panel restore after restart, Restricted Mode,
+C18 (watching above the folder), C6 (`#:schema`), C3 (`async-lsp` comparison).
 
 Next: [`02-python-driver.md`](02-python-driver.md)
