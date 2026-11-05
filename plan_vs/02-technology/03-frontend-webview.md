@@ -6,7 +6,7 @@
 |---|---|---|
 | Built with | the `vscode` API in the extension host (TS) | React app in an iframe |
 | Good at | fast, themed, keyboard-friendly lists; thousands of rows | graphs, layout, the focus stack, call trees, rich side panel |
-| Shows | Root ▸ folders ▸ files ▸ classes ▸ functions, the Archived list, the Missing list | a node and its neighbourhood, call trees, the doc panel (read, edit, add, remove) |
+| Shows | Root ▸ folders ▸ files ▸ classes ▸ functions, the Archived list, the Missing list, the "Recently removed" list (Restore, "Empty V-NOC trash") | a node and its neighbourhood, call trees, the doc panel (read, edit, add, remove) |
 
 The tree is the "always there" view; the canvas opens on demand ("Open in canvas").
 
@@ -108,7 +108,7 @@ Docs are **visible on the canvas**, next to the graph, as in the web V-NOC (`Doc
 | **[📄 Docs] toggle** (toolbar) and the card's **📄 n** badge | show / hide the doc panel. The panel follows the **selected** node. Its open/closed state is saved with `vscode.setState`. |
 | Doc list | the node's docs from **both sides** (private ones 🔒, 02-04 §3) |
 | **[+ Add doc]** | Shared or Private → a new `.md` on that side (02-04 §4; mints the ID if the node has none) |
-| **[🗑 Remove]** | confirm → the trash rule (anything git doesn't have goes to the trash, VS-D35 / VS-D52) |
+| **[🗑 Remove]** | confirm, then move to the V-NOC trash (VS-D70) |
 | ⋯ menu | rename, Share this doc / Make private (a move, VS-D58), Open beside (a regular VS Code editor in the next column) |
 | Viewer | rendered Markdown (`react-markdown`, ported); `vnoc://node/<id>` links focus that node |
 | **[✎] Edit** | switches the doc to an **editable Markdown source view in the panel**, under the same rule as code (below): a view of VS Code's document |

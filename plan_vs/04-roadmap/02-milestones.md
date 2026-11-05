@@ -27,7 +27,7 @@ PHASE 4   later (driver downloads, TS/JS, MCP / CLI…)
 | **M1** | Driver host (copy-on-first-run, lookup, handshake), structure index of the scope, SQLite cache, **sidebar tree**, **Quick look**, Go to code, Restricted Mode | right-click ▸ Quick look ▸ browse the tree | S2 | 06-03, 07-01…03, 08-01, 08-02 |
 | **M2** | **Canvas**: node card (expand · code view · zoom), **Canvas \| Code** tabs, **focus stack**, Reveal in V-NOC, auto / manual sync | explore visually; focus, Back, breadcrumbs | S1 | 09-01, 09-02 |
 | **M3** | **Docs**: guided setup, `vnoc.toml` / `local.toml`, `.gitignore` per mode, `node.toml`, **doc panel** (read, add, remove), shared / private, Share / Make private | document code and share it through git | — | 06-04, 08-02 |
-| **M4** | **Docs survive**: matching ladder, HEAD ancestry, Missing / Not on this branch / Archive / Relink / Remove, trash + fallback, strong two-ID merge | refactor and switch branches without losing docs | S4, S3 (trash) | 06-05, 06-06 |
+| **M4** | **Docs survive**: matching ladder, HEAD ancestry, Missing / Not on this branch / Archive / Relink / Remove, V-NOC trash + Restore, strong two-ID merge | refactor and switch branches without losing docs | S4, S3 (trash) | 06-05, 06-06 |
 | **M5** | **Call trees**: lazy, depth setting, expand, pulled-in files, external leaves, markers | open any function's call tree | S2 | 06-07 |
 | **M6** | **Editing in the canvas**: code (card, dialog, Code tab) and docs as views of VS Code's document; ⌘S / Ctrl+S; the version race | edit code and docs without leaving the canvas | S5 | 08-03, 09-03 |
 | ⭐ | **MVP `0.1` pre-release** on both stores, once the exit criteria in 04-01 hold | | | 10-01, 10-02 |

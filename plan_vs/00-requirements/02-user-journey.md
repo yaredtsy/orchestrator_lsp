@@ -124,8 +124,8 @@ Both are `WorkspaceEdit`s (undoable), never direct disk writes (VS-D16). Disable
 | E4b | **Pulls a teammate's deletion** | Missing + the normal prompt, unless the teammate already archived or removed that node (their decision arrives with the pull). |
 | — | A node **without** user data disappears | Nothing. It's cache. |
 
-**Archive** = soft delete in place (`status = "archived"` in the node's one `node.toml`), listed under "Archived". If that `node.toml` is shared, teammates see it archived too. After 90 days (configurable): private-only nodes expire to the trash, shared ones prompt (VS-D56).
-**Find it…** = relink right now. **Relink to…** (from Archived) = pick a node and the docs follow it. **Remove** = delete, after a confirmation listing the files. Any file whose current content **isn't in HEAD** (private files, new or edited shared docs, everything in solo mode) goes to the **trash**, or to `.vnoc/local/trash/` where there's no system trash (VS-D35).
+**Archive** = soft delete in place (`status = "archived"` in the node's one `node.toml`), listed under "Archived". If that `node.toml` is shared, teammates see it archived too. After 90 days (configurable): private-only nodes expire to the V-NOC trash, shared ones prompt (VS-D56).
+**Find it…** = relink right now. **Relink to…** (from Archived) = pick a node and the docs follow it. **Remove** = after a confirmation listing the files, every file (private or shared, committed or not) moves to the **V-NOC trash**, `.vnoc/local/trash/` (VS-D70). **Restore** from the "Recently removed" list moves them back; if the node no longer exists, it comes back as Missing. Nothing is deleted until you click **"Empty V-NOC trash"**.
 
 ## F. Changes settings any time
 

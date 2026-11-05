@@ -34,8 +34,13 @@ id = base32( blake3( repo_relative_path + "::" + qualname + "#" + occurrence )[.
 
 - **Why a hash (round-5 reply to R1):** the same function on two branches gets **the same ID**, so it gets the same `ID:` line and the same `.vnoc` folder. Git merges identical changes
   cleanly. With random IDs both would be different, which means a merge conflict in the source file.
-- **Taken already?** At creation, if that ID exists **anywhere** (in code, on the shared or local side, archived included), append a counter (`path::qualname#1#2`, then `#3`, …) and hash again until it's free.
-  This covers a function deleted and later re-created under the same name: its old, archived docs keep the old ID.
+- **Taken already? (VS-D71)** Before creating an ID: (1) ask the SQLite registry (a free early catch); (2) check the disk for `nodes/<shard>/<ID>/` and
+  `local/nodes/<shard>/<ID>/` (authoritative). If either finds it, step the counter (`path::qualname#1#2`, then `#3`, …) and hash again until it's free.
+  **Source files are not searched.** Only a folder collision can mix user data, and check (2) always catches it. This covers a function deleted and later
+  re-created under the same name: its old, archived docs keep the old ID.
+  - A **code-only duplicate** (the same `ID:` in two places, no folder involved) has no data attached and is repaired on the next sync: a copy matching
+    `node.toml`'s anchor keeps the ID; otherwise the copy whose current `path::qualname` hashes to the ID keeps it; the other copy gets a new ID.
+  - A **hash match on an archived folder** gives a new ID plus the prompt "An archived node used to be here: **Relink its docs?**"
 - **Derived once, then permanent.** It doesn't follow later renames; that's the point of a permanent ID.
 - **26 characters**, so sharding by the last 2 characters and everything else stays as it was.
   **Encode like a ULID** (Crockford base32 of the 128-bit number, with the 2 leftover bits in the *first* character). Plain RFC 4648 base32 puts them in the *last*
@@ -223,7 +228,7 @@ on each sync:
         │                                         ▼                          │
         └──── gone, same HEAD / HEAD forward ──► MISSING (computed) ─────────┘  badge + grouped notification
                                                   │      │      │
-                                       [Archive]  │      │      │ [Remove] (confirm; trash rule, 02-04 §7)
+                                       [Archive]  │      │      │ [Remove] (confirm; V-NOC trash (VS-D70), 02-04 §7)
                                        ┌──────────┘      │      └─────────► REMOVED
                                        ▼                 │ [Find it…]
                                    ARCHIVED (in node.toml) ──┘
@@ -235,7 +240,7 @@ on each sync:
 
 | Expired archived node | What happens |
 |---|---|
-| only **private** docs | **auto-expires to the trash** (never a plain delete, VS-D52) |
+| only **private** docs | **auto-expires to the V-NOC trash (VS-D70)** (never a plain delete, VS-D52) |
 | any **shared** doc | **prompt** ("2 archived nodes expired. Remove?"), because removing them changes the repo |
 
 - Missing and not-on-this-branch are **computed per machine, never stored**. Both clear themselves when the code comes back.

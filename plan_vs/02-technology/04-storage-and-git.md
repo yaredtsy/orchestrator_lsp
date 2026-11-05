@@ -1,7 +1,7 @@
 # 02.04: Storage and git: where data lives, the two sides of `.vnoc/`, node folders, collisions
 
 Decisions: VS-D36 (three places), VS-D37 (shared vs local, solo = local only), VS-D38 (node folders), VS-D39 (one `node.toml`),
-VS-D40 (two IDs on one node), VS-D35 + VS-D52 (Remove and the trash), VS-D46 + VS-D53 (the cache), VS-D50 (hash-derived IDs), VS-D51 (repo files are untrusted),
+VS-D40 (two IDs on one node), VS-D35 + VS-D52 + VS-D70 (Remove and the V-NOC trash), VS-D46 + VS-D53 (the cache), VS-D50 (hash-derived IDs), VS-D51 (repo files are untrusted),
 VS-D55 (one `.vnoc/` per git root), VS-D58 (moving between sides), VS-P24 (who writes what).
 Round 5 (2026-11-05) replaced this file's earlier `anchor.toml` / `state.toml` / `<slug>--<id>` design; round 6 brought back hash-derived IDs. The old rows are marked ⤴ in the decision log.
 
@@ -32,7 +32,7 @@ Round 5 (2026-11-05) replaced this file's earlier `anchor.toml` / `state.toml` /
 │   ├── nodes/7K/0Q8V…7K/                 private node folders, same sharding
 │   │   └── my-todo.md                    (no node.toml here: this node's one node.toml is on the shared side)
 │   ├── cache/                            ── MACHINE DATA ──  index.sqlite (+ -wal, -shm), lock
-│   └── trash/<date>/                     Remove fallback when there's no system trash (VS-D35)
+│   └── trash/<timestamp>_<node-id>/      written by Remove, with a trashed.toml (VS-D70)
 └── .gitignore                   written by V-NOC at setup: team `local/` + `local.toml`; solo `*` (§3)
 ```
 
@@ -187,24 +187,21 @@ same folder and the same `ID:` line, and git merges that cleanly. **What's left*
   goes through `WorkspaceEdit` and only happens in a trusted workspace.
 - `.gitattributes` merge drivers are **optional** only, since they need setup in every clone.
 
-## 7. Remove, and the trash (VS-D35)
+## 7. Remove, and the V-NOC trash (VS-D70)
 
-**Remove** (from a Missing / Archived node) deletes the node's folder on both sides, after a confirmation that lists the files.
+**Remove** (from a Missing / Archived node) **moves** the node's files on both sides into **`.vnoc/local/trash/<timestamp>_<node-id>/`**, after a confirmation that
+lists the files. Every Remove works this way: private or shared, committed or not, in team or solo mode. The OS trash is never used, and there's no "is it in git?" check.
 
-| The file's current content (including unsaved edits) | Goes to |
-|---|---|
-| **exactly what HEAD has** (a committed, unchanged shared doc) | deleted normally: git still has it |
-| **anything else**: private files, a new shared doc not committed yet, uncommitted or unsaved edits, everything in solo mode | **the trash** |
+- The relative paths are kept inside that folder, next to a **`trashed.toml`** (`node`, `side`, `file`, `removed_at`). It's under `local/`, so it's never committed.
+- The move is a `WorkspaceEdit.renameFile`, so **an open, dirty file follows the move and keeps its unsaved text** (the editor now shows the trash path).
+- A **"Recently removed"** list in the V-NOC UI offers **Restore**, which moves the files back. If the node no longer exists, it comes back as **Missing**.
+- **Restore never overwrites.** If a path exists again, that's reported as a conflict and the removed copy stays in the trash.
+- The file watcher sees each move as a **delete plus a create**.
+- **Never cleared automatically.** The V-NOC UI shows the trash's size and an **"Empty V-NOC trash"** button: the only permanent delete, and it needs a click.
 
-"Is it in HEAD?" = the file is tracked and its content hash equals the blob in HEAD (Rust checks with `gix`; unsaved buffers are compared using their text from the extension).
+The facts above were measured in spike S3 on **macOS only**.
 
-| Where | Trash |
-|---|---|
-| VS Code / Cursor | `workspace.fs.delete(uri, { useTrash: true })` |
-| CLI / MCP | the `trash` crate |
-| **No system trash** (Remote SSH, WSL, dev containers) | **`.vnoc/local/trash/<date>/`** with the relative paths kept. Always under `local/`, so never committed. **Never cleared automatically** (VS-D52): the V-NOC view shows its size and an **"Empty V-NOC trash"** action. |
-
-**V-NOC never permanently deletes user-written content without a click (VS-D52).** Expiry and Remove go to the trash; only the user empties it. Never auto-delete orphans either
+**V-NOC never permanently deletes user-written content without a click (VS-D52).** Expiry and Remove go to the V-NOC trash; only the user empties it. Never auto-delete orphans either
 (a folder whose node can't be found is Missing, not garbage). Archive expiry: 02-05 §5.
 
 ## 8. The cache: SQLite (VS-D46)

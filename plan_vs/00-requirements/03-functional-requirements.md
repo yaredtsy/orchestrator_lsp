@@ -115,7 +115,8 @@ Grouped by area, with gaps left for inserts. ~~Struck~~ rows were dropped in rev
 | FR-72 | Missing and not-on-this-branch nodes return to Active on their own when the code reappears. | M |
 | FR-73 | Archive (soft delete), stored on the doc's side. | M |
 | FR-74 | Relink to another node from Missing / Not on this branch / Archived. | M |
-| FR-75 | Remove with a confirmation listing the files. Files whose current content isn't in HEAD go to the **trash** (`useTrash` / `trash` crate), falling back to `.vnoc/local/trash/<date>/` where there's no system trash (VS-D35). That folder is **never auto-cleared**: its size is shown with an "Empty V-NOC trash" action (VS-D52). | M |
+| FR-75 | Remove with a confirmation listing the files. **Every** Remove (private or shared, committed or not) moves the files to **`.vnoc/local/trash/<timestamp>_<node-id>/`** with a `trashed.toml` (`node`, `side`, `file`, `removed_at`), never the OS trash (VS-D70). That folder is **never auto-cleared** (VS-D52). | M |
+| FR-7A | A **"Recently removed"** list offers **Restore**, which moves the files back and never overwrites (a path that exists again is a reported conflict); if the node no longer exists it comes back as **Missing**. The trash's size is shown with an **"Empty V-NOC trash"** button, the only permanent delete, and it needs a click (VS-D70). | M |
 | FR-76 | Nodes without user data are never prompted for. | M |
 | FR-77 | **HEAD watch**: `vscode.git` notifies; Rust runs the **ancestry test** (`merge-base --is-ancestor old new`). Not a descendant (checkout, reset, rebase) → nodes that disappear are **"not on this branch"**, with **no notification** (VS-D34). | M |
 | FR-78 | The **last synced HEAD is stored in the cache**; a HEAD change made while VS Code was closed is handled the same way. | M |

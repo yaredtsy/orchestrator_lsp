@@ -77,7 +77,7 @@ What's left: answer each open row ✅ / ❌ / a change. Then the decision log mo
 | C7 | VS Code's MCP registration API; opencode / pi config | VS-O1. |
 | ~~C8~~ | ~~Save participant time budget~~ → **answered**: ~1.5 s shared by all listeners; edits dropped if the document changed; misbehaving listeners skipped → VS-D66 (precomputed edits) | FR-2B. |
 | C9 | `vscode.git` API: HEAD change events, "rebase/merge in progress", `git.enabled = false` | VS-D15, VS-P28. |
-| C10 | Can save-time IDs work in **manual sync** mode? | VS-D22. |
+| C10 | Can save-time IDs work in **manual sync** mode? | VS-D22. **Answered by S3 + VS-D71:** yes. Planning needs only the one buffer; the "taken?" check is the registry + a disk check of the ID folders, no source search. |
 | C11 | macOS quarantine / Windows Defender on downloaded driver binaries | VS-D29. |
 | C12 | Lock crate (`fd-lock` / `fs4`) on all OSes and network homes; `dirs::data_local_dir` on Windows | VS-D29.4–5. |
 | C13 | HTTP client with proxy + rustls (`ureq` vs `reqwest`), and `http.noProxy` | VS-D29.6. |

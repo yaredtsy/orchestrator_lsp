@@ -14,7 +14,7 @@
 4. **Moves:** Share / Make private (file or whole node folder), merging into an existing folder, same-name clashes (`notes (2).md` + `vscode.diff`).
 5. **`.gitignore` per mode** and the solo ↔ team switch.
 6. **`FileOps` as the only output:** the use-case API (`attach_doc`, `share`, `archive`, `remove` …) returns operations; there is no public `write(path)`.
-7. **The no-delete invariant as a type:** a `Delete` op can only be built with a `UserConfirmed` token, and only targets content git has or the trash.
+7. **The no-delete invariant as a type:** a `Delete` op exists only for "Empty V-NOC trash" and can only be built with a `UserConfirmed` token. A Remove is a move into `.vnoc/local/trash/`, not a delete (VS-D70).
 8. **Config files:** `vnoc.toml` / `local.toml` reading, the last-valid-config rule, Restricted-Mode filtering of executable fields.
 
 ## MVP vs stable

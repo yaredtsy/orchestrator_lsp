@@ -29,7 +29,7 @@ Three releases, each with one job:
 | **Docs** | **doc panel**: read, edit, add, remove; shared / private; Share / Make private (folder moves) | same | docs on call nodes (VS-O6) |
 | **Editing in the canvas** | code + docs editable as views of VS Code's document; ⌘S / Ctrl+S | same | completions in the webview |
 | **Identity** | ID mode **`none` only**: permanent IDs live in `.vnoc` folder names; nodes are re-found by the **matching ladder** | + **in-code IDs**: `on-attach` / `all`, `[[path]]` rules, Add / Remove (exact span), Restore / Keep removed, save-time IDs, `# FileID:` | |
-| **Lost nodes** | HEAD ancestry, Missing / Not on this branch, Archive / Relink / Remove, trash with fallback, **strong** two-ID merge | + **weak**-match merge prompts, archive expiry (90 days), "Empty V-NOC trash" UI | |
+| **Lost nodes** | HEAD ancestry, Missing / Not on this branch, Archive / Relink / Remove, V-NOC trash + Restore, **strong** two-ID merge | + **weak**-match merge prompts, archive expiry (90 days), "Empty V-NOC trash" UI | |
 | **Sync** | auto / manual, startup mtime scan, hash-validated cache | same | Rust file watcher for CLI mode |
 | **Playground** | — | ✅ (VS-P12) | stored runs |
 | **Trust** | Restricted Mode = read-only, no executables from repo files | same | |
@@ -69,7 +69,7 @@ Everything else (the cache schema, the editor ↔ core protocol, the driver prot
 2. **The refactor suite** (05-spikes/04, turned into tests): docs survive rename-function, move-file, rename-folder, move-and-edit and cut/paste-between-files, with
    **zero wrong silent matches**. Cases the ladder can't solve end in Missing → Find it…, never in a wrong attachment.
 3. **Branch switches never prompt** (checkout, reset, rebase); a pulled deletion does (VS-D34). Tested with VS Code open and closed.
-4. **No data loss**: a test suite for Remove / Make private / Share / two-ID merge where every lost file is recoverable (git or trash).
+4. **No data loss**: a test suite for Remove / Make private / Share / two-ID merge where every lost file is recoverable (git or the V-NOC trash).
 5. **Editing in the canvas** never corrupts a file in the "type in the card and the editor at once" test (05-spikes/05).
 6. Runs on the four MVP platforms; VSIX < 40 MB per platform (NFR-32).
 7. **Two weeks of dogfooding** on this repo and pylspt with no open data-loss bug.
@@ -78,7 +78,7 @@ Everything else (the cache schema, the editor ↔ core protocol, the driver prot
 
 1. Everything in the stable column works, and in-code IDs pass a **two-person team test** (two clones, two branches, merges, the same function documented on both sides).
 2. The NFR speed targets (NFR-01..05) hold on a **~10,000-file** repo.
-3. Remote SSH, WSL and a dev container pass the full suite (trash fallback included).
+3. Remote SSH, WSL and a dev container pass the full suite, including Remove + Restore through `.vnoc/local/trash/` on each OS (spike S3 verified macOS only).
 4. The driver protocol is frozen as `1`; the cache schema has a rebuild-on-mismatch path tested from every MVP version.
 5. **Four weeks on the pre-release channel** with no P0 bug (data loss, corruption, a hang that blocks VS Code).
 6. A short user guide: setup, docs, IDs, team vs solo.

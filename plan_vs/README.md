@@ -75,7 +75,7 @@ User installs "V-NOC" (VS Code Marketplace, or Open VSX for Cursor / Windsurf / 
 │   └── E5. gone after an edit, or after a pull (HEAD moved forward) ──► "Missing" + one grouped notification
 │         ├── [Archive]  ──► soft-deleted in place, waits ──► [Relink to…] ──► active again (or expires after N days)
 │         ├── [Find it…] ──► pick the node it became
-│         └── [Remove]   ──► delete it and its docs (confirmed; anything git doesn't have goes to the trash; V-NOC never empties it)
+│         └── [Remove]   ──► move it and its docs to .vnoc/local/trash/ (confirmed; restorable from "Recently removed"; V-NOC never empties it)
 │
 ├── F. CHANGES SETTINGS ANY TIME  ("for the team or just me?" → vnoc.toml or local.toml)
 │   ├── F1. IDs → none       IDs already in code stay; no new ones
@@ -135,7 +135,7 @@ plan_vs/
 │   ├── 00-how-spikes-work.md ........................ rules, order, template
 │   ├── 01-hello-core.md ............................. S1 extension + sidecar + webview + trust
 │   ├── 02-python-driver.md .......................... S2 driver process, pylspt adapter, timings
-│   ├── 03-edits-and-saving.md ....................... S3 WorkspaceEdit, save hook, trash
+│   ├── 03-edits-and-saving.md ....................... S3 WorkspaceEdit, save hook, V-NOC trash
 │   ├── 04-git-and-matching.md ....................... S4 ancestry, branch cases, the refactor suite
 │   └── 05-canvas-editors.md ......................... S5 Monaco as document views, ⌘S, doc panel
 │                                                      2b: design docs, ONE FOLDER PER PROGRAM (the boxes in 02-01)

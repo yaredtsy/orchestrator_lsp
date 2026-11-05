@@ -8,18 +8,18 @@
 
 ## Will define
 
-1. **Applying `FileOps`:** create, edit, `renameFile`, delete-to-trash, as one `WorkspaceEdit`; saving files that weren't dirty.
+1. **Applying `FileOps`:** create, edit, `renameFile` (including moves into the V-NOC trash), as one `WorkspaceEdit`; saving files that weren't dirty.
 2. **Document views for the webview:** open, slice, follow changes, version-checked edits, the race rule.
 3. **⌘S / Ctrl+S in the canvas:** the keybinding command, finding the focused document, `document.save()`.
 4. **(Stable) the save hook:** precomputed ID edits per version, reasons, the time budget.
 5. **Recognising our own changes** so they don't loop back as user edits.
-6. **Trash:** `useTrash`, detecting "no trash", the fallback folder.
+6. **The V-NOC trash (VS-D70):** moving files into and out of `.vnoc/local/trash/` with `renameFile` (open and dirty files follow the move and keep their unsaved text), `trashed.toml`, Restore and its conflicts (never overwrite).
 
 ## MVP vs stable
 
 | MVP (0.x) | Stable (1.0) |
 |---|---|
-| FileOps, document views, ⌘S, trash | the save hook for IDs |
+| FileOps, document views, ⌘S, V-NOC trash | the save hook for IDs |
 
 ## Questions to settle while writing
 

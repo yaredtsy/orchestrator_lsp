@@ -47,7 +47,7 @@ depth  = 3                        # levels per open / expand
 budget = 5000                     # max nodes per tree before "truncated" (plan/P20)
 
 [retention]                       # VS-D56
-archive_days = 90                 # archived nodes expire after this (private → trash, shared → prompt)
+archive_days = 90                 # archived nodes expire after this (private → V-NOC trash, shared → prompt)
 cache_days   = 30                 # unused cache versions are evicted after this
 
 # ── Monorepo / per-folder rules: one file, [[path]] sections. Most specific path wins. ──

@@ -91,8 +91,9 @@ So V-NOC must **never wait on a driver inside the hook beyond its own budget**; 
 for the three sizes (same-process estimate; it excludes process scheduling and pipe I/O, which I did not measure). Even computed at save, p95 plus the hop is ~51 ms for 4,200 lines, leaving **~1,450 ms**.
 The budget is not the constraint; the **rule** is (never block the hook). Real risks would be a cold driver start (~130 ms for ty, S2) or a busy core.
 
-**C10, save-time IDs in manual sync: yes for planning and editing.** The plan only needs the one buffer and the driver; no index and no indexing-on-change. **One open point:** VS-D50's "is this ID already taken anywhere?"
-check needs the core's ID list. In manual sync that list can be stale, so a re-created function could get an ID that an archived doc already uses. Needs a decision (see below).
+**C10, save-time IDs in manual sync: yes (decided, VS-D71).** The plan only needs the one buffer and the driver; no index and no indexing-on-change. The "ID already taken?" check is the SQLite registry
+(early catch) plus the disk check for `nodes/<shard>/<ID>/` and `local/nodes/<shard>/<ID>/` (authoritative); source files are not searched. A code-only duplicate has no data attached and is repaired at the next sync
+(anchor match, else the `path::qualname` hash match keeps the ID, the other copy gets a new one). Not built in this spike: it only covers the editing half.
 
 **Step 7, C16 (VS-D70: V-NOC trash, macOS only). Passes.**
 - Remove moves files to `.vnoc/local/trash/<timestamp>_<node-id>/<same relative path>` with a `trashed.toml` (`node`, `side`, `file`, `removed_at`); Restore moves them back. A remove of 3 files took ~160-340 ms.
@@ -115,10 +116,9 @@ Result: B8 holds, with two additions: **moves are not direct writes**, and `tras
 1. The driver's `initialize` reply needs `capabilities: {}` or stock LSP clients refuse it. Added.
 2. `lsp-server` requires the `initialized` notification before any request.
 
-**Open (needs you):**
+**Open:**
 1. **`FileID: plain file` test:** my expected string was cut short; the driver's output is right. One-line fix in the test, waiting for your go-ahead.
-2. **C10 uniqueness:** in manual sync, how should the "ID already taken?" check work with a stale list?
-3. Not exercised: save reasons `AfterDelay` and `FocusOut`; non-macOS; remote.
+2. Not exercised: save reasons `AfterDelay` and `FocusOut`; non-macOS; remote.
 
 
 Next: [`04-git-and-matching.md`](04-git-and-matching.md)
