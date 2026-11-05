@@ -51,6 +51,16 @@
 | Extension bundle (with `vscode-languageclient`) | 800 KB, unminified |
 | `cargo clippy` with `deny(print_stdout)` | clean |
 
+**Panel restore works (checked in VS Code).** Two rules we learned the hard way. They go into `08-extension/`:
+1. A panel type that can be restored needs `activationEvents: ["onWebviewPanel:<viewType>"]`. Without it the extension isn't started on restore and the panel hangs on its loading screen.
+2. `activate()` must register `registerWebviewPanelSerializer` **before** any `await`. Start the core in the background and have every request wait on a `ready` promise.
+
+**C18 answered: yes.** With `repo/sub/` opened, `createFileSystemWatcher(new RelativePattern(<parent>, ".vnoc/**"))` delivered create, change and delete
+for a file in `repo/.vnoc/` (Trusted mode). Not yet checked: whether events still arrive in Restricted Mode. The watcher must be created in `activate()`,
+so the extension has to be active first.
+
+**Restricted Mode:** the extension activates and the canvas opens (checked by hand).
+
 Still to check by hand (see `spikes/s1-hello-core/README.md`): time to first pong inside VS Code, panel restore after restart, Restricted Mode,
 C18 (watching above the folder), C6 (`#:schema`), C3 (`async-lsp` comparison).
 

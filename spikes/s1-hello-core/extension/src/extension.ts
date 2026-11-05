@@ -4,6 +4,8 @@ import { LanguageClient, TransportKind } from "vscode-languageclient/node";
 
 let client: LanguageClient;
 let t0 = Date.now();
+// Resolves once the core has started. Anything that talks to the core awaits this first.
+let ready: Promise<void>;
 
 // Where the Rust binary is. In Restricted Mode (untrusted folder) we must NOT take the
 // path from workspace settings, or a malicious repo could make us run any program.
@@ -15,7 +17,7 @@ function serverPath(ctx: vscode.ExtensionContext): string {
   return path.join(ctx.extensionPath, "..", "spike-core", "target", "release", "spike-core");
 }
 
-export async function activate(ctx: vscode.ExtensionContext) {
+export function activate(ctx: vscode.ExtensionContext) {
   t0 = Date.now();
   const out = vscode.window.createOutputChannel("V-NOC S1");
   out.appendLine(`workspace.isTrusted = ${vscode.workspace.isTrusted}`);
@@ -27,12 +29,15 @@ export async function activate(ctx: vscode.ExtensionContext) {
     // No documentSelector: we are not a language server, we only use the JSON-RPC pipe.
     { documentSelector: [] },
   );
-  await client.start();
-  const first = await client.sendRequest<{ pong: boolean; pid: number }>("vnoc/ping");
-  out.appendLine(`first pong after ${Date.now() - t0} ms: ${JSON.stringify(first)}`);
+  // Do NOT await here: VS Code is waiting for activate() to register the serializer below.
+  ready = client.start().then(async () => {
+    const first = await client.sendRequest<{ pong: boolean; pid: number }>("vnoc/ping");
+    out.appendLine(`first pong after ${Date.now() - t0} ms: ${JSON.stringify(first)}`);
+  });
 
   ctx.subscriptions.push(
     vscode.commands.registerCommand("vnoc.s1.ping", async () => {
+      await ready;
       const r = await client.sendRequest<{ pong: boolean; pid: number }>("vnoc/ping");
       vscode.window.showInformationMessage(`pong from pid ${r.pid}`);
     }),
@@ -77,6 +82,7 @@ function setupPanel(ctx: vscode.ExtensionContext, panel: vscode.WebviewPanel) {
   // The webview cannot talk to the core directly. It posts a message, we relay it.
   panel.webview.onDidReceiveMessage(async (m: { type: string; id: number; method: string }) => {
     if (m.type !== "req") return;
+    await ready;
     const result = await client.sendRequest(m.method);
     panel.webview.postMessage({ type: "res", id: m.id, result, ms: Date.now() - t0 });
   });
