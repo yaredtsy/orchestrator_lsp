@@ -70,7 +70,7 @@ Legend: **✅ reuse** (read it as-is) · **✏️ change** (still the base, with
 ### `plan/07-roadmap/`
 | File | | Notes |
 |---|---|---|
-| 01-milestones.md | ❌ | Replaced by [`../03-next/02-phase-plan.md`](../03-next/02-phase-plan.md). Several milestones carry over (M1, M4–M8). |
+| 01-milestones.md | ❌ | Replaced by [`../04-roadmap/02-milestones.md`](../04-roadmap/02-milestones.md). Several milestones carry over (M1, M4–M8). |
 | 02-testing-strategy.md | ✅ | Plus extension tests (`@vscode/test-electron`) in phase 2. |
 | 03-deferred.md | ✏️ | Merged into VS-O*. |
 

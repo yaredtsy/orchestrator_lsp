@@ -41,7 +41,7 @@ The same VSIX files go to both stores. So "**works in Cursor**" (FR-90) costs on
 | 1 | **Pre-release channel** (`--pre-release`) from the first public build | Users opt in; we can ship weekly without a "1.0" promise. |
 | 2 | CI in the monorepo: `release-core.yml` builds `vnoc` + the bundled Python driver per target → `vsce package --target` → both stores. `release-driver.yml` builds a driver per target → signs (minisign) → uploads archives → regenerates and signs `manifest.json` | One tag = one release: `core-v…` or `driver-python-v…`. Runners: macOS (arm64 + x64), Ubuntu (x64 + arm64), Windows x64. |
 | 3 | Start with **macOS arm64 + Linux x64 + Windows x64**, then add the rest | Covers most users on day one. |
-| 4 | Feature order = the milestone list in [`../03-next/02-phase-plan.md`](../03-next/02-phase-plan.md): tree → canvas + focus stack → docs + `node.toml` → lazy call tree → IDs → playground | Each step is usable on its own. |
+| 4 | Feature order = the milestone list in [`../04-roadmap/02-milestones.md`](../04-roadmap/02-milestones.md): tree → canvas + focus stack → docs + `node.toml` → lazy call tree → IDs → playground | Each step is usable on its own. |
 
 ## 4. Integrations later (VS-O1, FR-91, FR-93)
 

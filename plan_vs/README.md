@@ -7,7 +7,8 @@
 > **diverges** where the product changed (storage, API, packaging, identity, drivers) and **points back** to `plan/` where the Rust core
 > stays the same (scan, diff, reconcile, call-tree layers). See [`01-decisions/02-relation-to-old-plan.md`](01-decisions/02-relation-to-old-plan.md).
 >
-> **Phase:** 🟢 **Phase 1: requirements and decisions.** Eight review rounds are in the [decision log](01-decisions/01-decision-log.md).
+> **Phase:** 🟢 **Phase 2: spikes, then design.** Phase 1 (8 review rounds) is in the [decision log](01-decisions/01-decision-log.md). Start at
+> [`04-roadmap/01-mvp-vs-stable.md`](04-roadmap/01-mvp-vs-stable.md): what ships in the MVP (0.x) vs stable (1.0).
 > Phase 2 starts once [`03-next/01-review-checklist.md`](03-next/01-review-checklist.md) is answered.
 >
 > **Style:** written to teach. New VS Code ideas get a **🧩 VS Code note**, Rust ideas a **🦀 Rust note**.
@@ -93,7 +94,7 @@ User installs "V-NOC" (VS Code Marketplace, or Open VSX for Cursor / Windsurf / 
     └── a teammate clones ──► cache rebuilt ──► shared docs re-attach (ID comment or node.toml)
 ```
 
-Not in v1, on purpose: **history/versioning, agent, tasks, logs** (and groups, pending review). Hooks: [`03-next/02-phase-plan.md`](03-next/02-phase-plan.md).
+Not in v1, on purpose: **history/versioning, agent, tasks, logs** (and groups, pending review). What ships when: [`04-roadmap/01-mvp-vs-stable.md`](04-roadmap/01-mvp-vs-stable.md).
 
 ---
 
@@ -104,30 +105,54 @@ plan_vs/
 │
 ├── README.md ........................................ you are here (the user tree above)
 │
+│   ═══ PHASE 1: what, why, with what (done) ═══
 ├── 00-requirements/ ................................. WHAT the user gets
 │   ├── 01-vision-and-scope.md ....................... v1 in / out, personas, success criteria
 │   ├── 02-user-journey.md ........................... the tree above, branch by branch
 │   ├── 03-functional-requirements.md ................ FR-xx list with priorities
 │   ├── 04-non-functional-requirements.md ............ speed, safety, git, platforms
 │   └── 05-user-controls-and-config.md ............... who controls what; vnoc.toml + local.toml drafts
-│
 ├── 01-decisions/ .................................... WHY
 │   ├── 01-decision-log.md ........................... ✅ VS-D1…D66 · 🟡 VS-P1…P35 · 🔓 VS-O1…O10
 │   └── 02-relation-to-old-plan.md ................... plan/ file by file: reuse · change · drop
-│
 ├── 02-technology/ ................................... WITH WHAT (decision level)
-│   ├── 01-architecture-at-a-glance.md ............... the boxes, arrows and main flows
+│   ├── 01-architecture-at-a-glance.md ............... the four programs, the arrows, the main flows
 │   ├── 02-running-rust-sidecar.md ................... how VS Code starts and talks to the Rust core
-│   ├── 03-frontend-webview.md ....................... React + xyflow, the message bridge, the focus stack
-│   ├── 04-storage-and-git.md ........................ where data lives, .vnoc/ layout, node.toml, two-IDs merge, cache, collisions
-│   ├── 05-identity-and-archive.md ................... two keys, ID comments, modes + [[path]] rules, ladder, states, archive, save-time edits
+│   ├── 03-frontend-webview.md ....................... React + xyflow, node card, doc panel, editors, focus stack
+│   ├── 04-storage-and-git.md ........................ where data lives, .vnoc/ layout, node.toml, moves, cache, collisions
+│   ├── 05-identity-and-archive.md ................... IDs, modes + [[path]] rules, ladder, states, archive, save-time edits
 │   ├── 06-distribution-and-integrations.md .......... VSIX per platform, stores, Cursor/opencode/pi/Claude Code later
-│   └── 07-repo-and-drivers.md ....................... the monorepo; drivers as downloadable, signed executables
+│   └── 07-repo-and-drivers.md ....................... the monorepo; drivers as separate, signed executables
+├── 03-next/ ......................................... the phase-1 gate
+│   ├── 01-review-checklist.md ....................... what was asked and answered; facts for the spikes (C)
+│   └── 02-phase-plan.md ............................. all phases on one screen
 │
-└── 03-next/ ......................................... WHAT HAPPENS NEXT
-    ├── 01-review-checklist.md ....................... ★ what's still to answer before phase 2
-    └── 02-phase-plan.md ............................. spikes, phase-2 docs, MVP milestones
+│   ═══ PHASE 2: in what order, test the risks, design each program ═══
+├── 04-roadmap/ ...................................... ★ START HERE for phase 2
+│   ├── 01-mvp-vs-stable.md .......................... what ships in 0.x vs 1.0; the frozen data format; exit criteria
+│   └── 02-milestones.md ............................. order of work, M0–M10, "done"
+├── 05-spikes/ ....................................... 2a: throwaway experiments (code in spikes/)
+│   ├── 00-how-spikes-work.md ........................ rules, order, template
+│   ├── 01-hello-core.md ............................. S1 extension + sidecar + webview + trust
+│   ├── 02-python-driver.md .......................... S2 driver process, pylspt adapter, timings
+│   ├── 03-edits-and-saving.md ....................... S3 WorkspaceEdit, save hook, trash
+│   ├── 04-git-and-matching.md ....................... S4 ancestry, branch cases, the refactor suite
+│   └── 05-canvas-editors.md ......................... S5 Monaco as document views, ⌘S, doc panel
+│                                                      2b: design docs, ONE FOLDER PER PROGRAM (the boxes in 02-01)
+├── 06-core/ ......................................... the Rust core
+│   ├── 01-crates-and-domain.md   02-editor-protocol.md   03-cache-schema.md   04-userdata-writer.md
+│   └── 05-sync-and-matching.md   06-identity.md          07-call-tree.md
+├── 07-drivers/ ...................................... language drivers
+│   └── 01-driver-protocol.md     02-driver-host.md       03-python-driver.md
+├── 08-extension/ .................................... the VS Code extension host (TypeScript)
+│   └── 01-package-and-activation.md   02-commands-and-views.md   03-documents-and-saving.md
+├── 09-webview/ ...................................... the canvas (React)
+│   └── 01-app-and-state.md   02-canvas-and-node-card.md   03-editors-and-doc-panel.md
+└── 10-release/ ...................................... shipping it
+    └── 01-ci-and-packaging.md   02-testing.md
 ```
+
+Design docs start as **outlines** (📝): each says what it will define, what it builds on, its MVP / stable split, and which spike it waits for.
 
 Rule for this folder: **at most one sub-folder deep.** One topic per file.
 
@@ -135,4 +160,5 @@ Rule for this folder: **at most one sub-folder deep.** One topic per file.
 
 ## Start here
 
-→ [`00-requirements/01-vision-and-scope.md`](00-requirements/01-vision-and-scope.md)
+→ Phase 1 from the beginning: [`00-requirements/01-vision-and-scope.md`](00-requirements/01-vision-and-scope.md)
+→ Phase 2: [`04-roadmap/01-mvp-vs-stable.md`](04-roadmap/01-mvp-vs-stable.md)

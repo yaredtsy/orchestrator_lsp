@@ -118,4 +118,4 @@ Most of it is solid and fits the earlier rounds. These are the points worth a se
 | R13 | **Base32 bit layout matters for sharding.** 16 bytes = 128 bits = 25.6 characters. Plain RFC 4648 base32 puts the 2 spare bits in the *last* character (only 8 possible values → 256 shards). Encoding like a ULID puts them in the *first* character, so the last two are full (1,024 shards). | ✏️ 02-05 §1. → **Round 7: VS-D60**, agreed. |
 | R14 | **A docstring ID is part of `__doc__`**: it shows in `help()`, IDE hovers and Sphinx/pdoc output. The pasted D5 point ("a comment doesn't affect `__doc__`") doesn't hold for docstring IDs. The old V-NOC worked this way too. | ✏️ Written down as a trade-off in 02-05 §2. No change unless you want one. |
 
-Next: [`02-phase-plan.md`](02-phase-plan.md)
+Next: [`02-phase-plan.md`](02-phase-plan.md) → phase 2 starts at [`../04-roadmap/01-mvp-vs-stable.md`](../04-roadmap/01-mvp-vs-stable.md)
