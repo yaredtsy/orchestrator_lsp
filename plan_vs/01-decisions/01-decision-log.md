@@ -122,6 +122,16 @@ Source: the pasted "Storage and configuration decisions" doc (it wins where it d
 
 ---
 
+## Decided ✅: round 8 (spike findings, 2026-11-05)
+
+| # | Decision | Supersedes / refines | Where |
+|---|---|---|---|
+| VS-D67 | **[you] The core's transport is `async-lsp` (tokio), not `lsp-server`** (spike S1/C3: 55 vs 40 lines, 1.84 vs 0.87 MB, 103 vs 41 crates, 45 s vs 17 s clean build, accepted for concurrency). Conditions: **(1)** `unhandled_notification` and `unhandled_request` are registered in the skeleton: log and continue, never exit. **(2)** Lifecycle handlers (`initialize`, `initialized`, `shutdown`, `exit`) are in the M0 skeleton. **(3)** A skeleton test sends unknown notifications and requests plus a full lifecycle and asserts the server is still alive. **(4)** Async is for I/O only: CPU work (parsing, hashing) goes through `spawn_blocking` or a thread pool, SQLite writes go to the single writer thread, and a test or debug check warns when a handler holds a tokio worker for more than ~50 ms. Use the re-exported `async_lsp::lsp_types` (a separate `lsp-types` crate gives a second, incompatible `Request` trait). | answers C3 | 05-spikes/01 |
+| VS-D68 | **[you] The transport crate is chosen per hop; "both hops" (checklist C3) no longer holds.** The **core** uses `async-lsp` (VS-D67). **Drivers use `lsp-server`** (threads, smaller binary, ignores unknown messages); a driver may pick another crate. Conditions: **(1)** the driver's main loop only dispatches; each request runs on a worker thread or pool with a per-request `AtomicBool` cancel flag, so `$/cancelRequest`, `shutdown` and stdin EOF are handled **while analysis runs**. **(2)** The **driver protocol is a wire spec** (JSON-RPC + `Content-Length` framing + versioned schema), documented on its own; it does not depend on any crate. **`vnoc-driver-protocol` provides Rust types and helpers**, not the definition. | refines VS-D67 | 05-spikes/02 |
+| VS-D69 | **[you] Pagination (lazy call-tree expansion with caching and resuming) is deferred, and done in one go later.** Spike S2/C1: `render_depth` shortens the output but the solver still solves the whole tree (depth 3 ≈ unbounded). Real laziness needs changes inside pylspt, so they are batched: **bounded solving, caching/resuming, and an external cancel flag** (pylspt has only `Limits::deadline`). Until then the driver returns the tree with `render_depth`, which is cheap on httpx (under ~100 ms). pylspt stays untouched in S2. | refines VS-D68 | 05-spikes/02 |
+
+---
+
 ## Proposed: please confirm 🟡
 
 | # | Proposal | Why | Alternative |

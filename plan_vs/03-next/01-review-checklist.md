@@ -70,7 +70,7 @@ What's left: answer each open row ✅ / ❌ / a change. Then the decision log mo
 |---|---|---|
 | C1 | Does pylspt's `render_depth` bound the **solving**, or only the output? Time a depth-3 tree on a real repo. | Lazy is only lazy if solving is bounded. |
 | C2 | Does pylspt / vendored ruff/ty ever write to **stdout** (inside the driver)? | stdout is the protocol. |
-| C3 | `lsp-server` vs `async-lsp` / `tower-lsp-server` | Transport crate for both hops. |
+| C3 | `lsp-server` vs `async-lsp` / `tower-lsp-server` | Transport crate for both hops. **Answered by S1:** core = `async-lsp` (VS-D67); drivers = `lsp-server` (VS-D68). "Both hops" no longer holds. |
 | C4 | Stripped/LTO binary size per platform | NFR-32. |
 | C5 | Which stores Cursor / Windsurf install from | FR-90. |
 | C6 | `#:schema` support in TOML extensions (Even Better TOML, Tombi) | FR-12, VS-D47. |

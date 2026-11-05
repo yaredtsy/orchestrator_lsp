@@ -61,6 +61,33 @@ so the extension has to be active first.
 
 **Restricted Mode:** the extension activates and the canvas opens (checked by hand).
 
+**C3 measured:** same `vnoc/ping` server written twice (`spike-core/` and `spike-core-async/`).
+
+| | `lsp-server` 0.10 | `async-lsp` 0.2.4 (+ tokio) |
+|---|---|---|
+| Code lines (no blanks or comments) | 40 | 55 |
+| Release binary, stripped | 0.87 MB | 1.84 MB (2.1×) |
+| Crates in the dependency tree | 41 | 103 |
+| Clean release build | 17.5 s | 45.2 s |
+| Style | threads + channels, `match` on method string | async, one *type* per method, tower layers |
+
+Gotchas found while porting (each cost a failed run):
+1. **Unhandled notification is fatal in `async-lsp`.** The server shut down on `initialized` until we added a handler. `lsp-server` ignores it. Set `unhandled_notification` to log-and-continue, or VS Code will kill the core on something unexpected.
+2. **`shutdown` is not automatic.** `lsp-server` has `handle_shutdown`. In `async-lsp` we add `request::Shutdown` ourselves.
+3. **`PipeStdout` needs a real pipe.** Redirecting stdout to a file panics. Fine under VS Code, annoying for manual tests.
+4. **`async-lsp` pins its own `lsp-types` (0.95).** A separate `lsp-types` 0.97 dependency gives two unrelated `Request` traits. Use `async_lsp::lsp_types`.
+5. **Closing stdin ends the server at once** (EOF = client gone), so piped test scripts must keep stdin open.
+
+**C3 decision (yared): async. Use `async-lsp` (tokio) for the core.** The core will juggle drivers, file watching and the canvas at once, so we take the async crate
+now instead of a rewrite later. Handle the five gotchas above in the core's skeleton: log-and-continue for unknown notifications, explicit `Shutdown`, use the re-exported `lsp_types`.
+
+**C6 answered: yes, in both editors.** `#:schema ./schema.json` on line 1 of `vnoc.toml` gives completions, hover descriptions, and errors for bad values and
+unknown keys, in Even Better TOML and in Tombi. The relative path is resolved from the TOML file's own folder.
+- Even Better TOML logs `data did not match any variant of untagged enum SchemaCatalog` on startup (its SchemaStore catalog download fails). It doesn't affect `#:schema`.
+  Silence it with `"evenBetterToml.schema.repositoryEnabled": false`.
+- Tombi had no such errors, so **recommend Tombi in our docs**.
+- Not tested: `#:schema https://…` (a URL instead of a local path).
+
 Still to check by hand (see `spikes/s1-hello-core/README.md`): time to first pong inside VS Code, panel restore after restart, Restricted Mode,
 C18 (watching above the folder), C6 (`#:schema`), C3 (`async-lsp` comparison).
 
