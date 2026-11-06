@@ -3,6 +3,8 @@ pub mod driver;
 pub mod git;
 pub mod ladder;
 pub mod model;
+pub mod ops;
+pub mod reconcile;
 pub mod similarity;
 pub mod snapshot;
 

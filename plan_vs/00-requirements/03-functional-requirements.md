@@ -43,7 +43,8 @@ Grouped by area, with gaps left for inserts. ~~Struck~~ rows were dropped in rev
 | FR-25 | **Per-node Remove permanent ID**: removes the driver's recorded span **only if its current text still matches exactly**; otherwise shows the line and changes nothing; never a pattern search (VS-D49); sets `id_in_code = "never"`; docs stay attached (VS-D43). | M |
 | FR-26 | "Remove IDs in this folder" (exact span per ID, preview, mismatches listed). | S |
 | FR-27 | Without an ID (or a lost comment): the six-step ladder (path + name, content hash, git rename, body hash, similarity, Missing) (VS-D44). A lost comment → one grouped "Restore / Keep removed" notice. | M |
-| FR-28 | Duplicate in-code IDs: the copy matching the cached node (or `node.toml`) keeps it; the other gets a new ID. | M |
+| FR-2D | **Step 0, observed moves:** renames and rewrites made in the editor (tracked ranges) and file renames from VS Code are applied exactly at sync, before the ladder. Anything that isn't clearly an editor edit falls back to the ladder (VS-D76). Ships with the ladder. | M |
+| FR-28 | Duplicate in-code IDs: the copy matching `node.toml`'s anchor keeps it; else the copy whose current `path::qualname` hashes to the ID; else, if a node folder exists, **ask**; else the copy first by path, then line. The other gets a new ID (VS-D71, VS-D74). | M |
 | FR-29 | **Rust never writes source files.** All source edits are text edits applied by the extension with `WorkspaceEdit`. Files that don't parse are skipped (VS-D16). | M |
 | FR-2A | **IDs only inside the scope.** Pulled-in nodes get path identity only (VS-D21). | M |
 | FR-2B | New functions under `all` get IDs **as part of the user's save** (`onWillSaveTextDocument` + `waitUntil`) for `Manual` and `FocusOut` saves; `AfterDelay` is skipped; only functions that parse without errors (VS-D31). | M |
@@ -96,6 +97,7 @@ Grouped by area, with gaps left for inserts. ~~Struck~~ rows were dropped in rev
 | FR-55 | Each doc is **shared** or **private**; Rust decides the file location from that (VS-D24). | M |
 | FR-56 | **Share this doc / Make private** move files between sides (VS-D26). | M |
 | FR-57 | Sharing / un-sharing **moves** a doc or a node folder between `local/nodes/` and `nodes/` (merging into an existing folder). "Share all docs…" and "Make all private…" preview every folder that moves; the latter warns that teammates lose those docs on commit (VS-D58). | M |
+| FR-58 | **Doc freshness:** saving a doc stores the node's normalised body hash in its frontmatter; when the code changes, the doc shows "Code changed since this doc was last edited", with **Still accurate**. Functions and methods only; docstring changes don't count (VS-D77). | M |
 
 ## 6x: Playground
 
@@ -110,17 +112,17 @@ Grouped by area, with gaps left for inserts. ~~Struck~~ rows were dropped in rev
 
 | # | Requirement | P |
 |---|---|---|
-| FR-70 | A documented node absent after the ladder is **Missing** (badge), never silently deleted, when its `node.toml` is **committed in HEAD's tree**, or when it floats and HEAD is on its last-seen branch or that branch was deleted (VS-D73). | M |
-| FR-71 | One grouped, non-blocking notification per sync, **only for Missing**, and **not while HEAD is detached** (the nodes are still listed) (VS-D73). | M |
+| FR-70 | A documented node absent after the ladder is **Missing** (badge), never silently deleted, when there's **no git repo**, when its `node.toml` is **committed in HEAD's tree**, or when it floats and HEAD is on its last-seen branch or that branch was deleted (VS-D74). | M |
+| FR-71 | One grouped, non-blocking notification per sync, **only for Missing**, and **not while HEAD is detached** (the nodes are still listed) (VS-D74). | M |
 | FR-72 | Missing and not-on-this-branch nodes return to Active on their own when the code reappears. | M |
 | FR-73 | Archive (soft delete), stored on the doc's side. | M |
 | FR-74 | Relink to another node from Missing / Not on this branch / Archived. | M |
 | FR-75 | Remove with a confirmation listing the files. **Every** Remove (private or shared, committed or not) moves the files to **`.vnoc/local/trash/<timestamp>_<node-id>/`** with a `trashed.toml` (`node`, `side`, `file`, `removed_at`), never the OS trash (VS-D70). That folder is **never auto-cleared** (VS-D52). | M |
 | FR-7A | A **"Recently removed"** list offers **Restore**, which moves the files back and never overwrites (a path that exists again is a reported conflict); if the node no longer exists it comes back as **Missing**. The trash's size is shown with an **"Empty V-NOC trash"** button, the only permanent delete, and it needs a click (VS-D70). | M |
 | FR-76 | Nodes without user data are never prompted for. | M |
-| FR-77 | **HEAD watch**: `vscode.git` notifies; Rust reads only a path lookup in HEAD's tree, the current branch and the local branch list. No ancestry test, no history (VS-D73). | M |
+| FR-77 | **HEAD watch**: `vscode.git` notifies; Rust reads only a path lookup in HEAD's tree, the current branch and the local branch list. No ancestry test, no history (VS-D74). | M |
 | FR-78 | The cache stores **`last_seen(id, branch)`**, updated on each sync where the node is present and HEAD is on a branch (never while detached). A HEAD change made while VS Code was closed is handled by the same rule. | M |
-| FR-79 | A **floating** node (its `node.toml` isn't committed in HEAD's tree) is **"not on this branch"**, with **no notification**, when it has no `last_seen` record or its last-seen branch still exists and isn't the current one. Otherwise it's Missing. A renamed branch looks deleted (accepted) (VS-D73). | M |
+| FR-79 | A **floating** node (its `node.toml` isn't committed in HEAD's tree) is **"not on this branch"**, with **no notification**, when it has no `last_seen` record or its last-seen branch still exists and isn't the current one. Otherwise it's Missing. A renamed branch looks deleted (accepted) (VS-D74). | M |
 
 ## 8x: Sharing / git
 

@@ -14,6 +14,7 @@
 4. **(Stable) the save hook:** precomputed ID edits per version, reasons, the time budget.
 5. **Recognising our own changes** so they don't loop back as user edits.
 6. **The V-NOC trash (VS-D70):** moving files into and out of `.vnoc/local/trash/` with `renameFile` (open and dirty files follow the move and keep their unsaved text), `trashed.toml`, Restore and its conflicts (never overwrite).
+7. **Observed moves (VS-D76):** forwarding incremental `didChange` and `onWillRenameFiles` / `onDidRenameFiles` to the core; the reload test that ends tracking for a document.
 
 ## MVP vs stable
 

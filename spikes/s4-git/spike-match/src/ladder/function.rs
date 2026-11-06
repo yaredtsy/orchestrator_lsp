@@ -71,8 +71,17 @@ pub fn stage_function<'a>(path: &str, qualname: &str, before: &'a Snapshot, afte
         .filter(|d| d.kind == old.kind && !existed.contains(&(d.file.as_str(), d.qualname.as_str())) && !m.is_claimed(&d.file, &d.qualname))
         .collect();
     let exact_unique = if m.is_unique(&old.body_hash) { pool.iter().position(|d| d.body_hash == old.body_hash) } else { None };
-    let has_twin = before.all_defs().any(|d| !(d.file == path && d.qualname == qualname) && d.body_hash == old.body_hash);
+    let has_twin = has_twin(old, before, after);
     Stage::Later(Later { old, pool, mapped_file, exact_unique, has_twin })
+}
+
+/// An exact twin of the lost body, anywhere in the before-state or the after-state, matched or unmatched (VS-D73).
+/// Before: any OTHER function with the same body. After: a body that now appears twice or more (once is the candidate itself,
+/// which is what a clean rename looks like).
+fn has_twin(old: &Def, before: &Snapshot, after: &Snapshot) -> bool {
+    let in_before = before.all_defs().any(|d| !(d.file == old.file && d.qualname == old.qualname) && d.body_hash == old.body_hash);
+    let in_after = after.all_defs().filter(|d| d.body_hash == old.body_hash).count() >= 2;
+    in_before || in_after
 }
 
 /// Steps 4 and 5, given the config. Scoring (the slow part) is skipped when step 4 already decides.
@@ -105,5 +114,59 @@ fn to_outcome(l: &Later, scored: &[Scored], v: Verdict) -> Outcome {
         Verdict::Provisional { pool } => Outcome::Provisional(cand(l, scored, pool)),
         Verdict::Ask { pool, reasons } => Outcome::Ask { candidates: pool.into_iter().map(|p| cand(l, scored, p)).collect(), reasons },
         Verdict::Nothing => Outcome::Missing,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ladder::matching::matching;
+    use crate::testutil::{def, snap};
+
+    const BODY: &str = "total = 0 . 0 for item in items : total += item [ 'p' ] return round ( total , 2 )";
+    const OTHER: &str = "return a + b";
+
+    fn twin_of(before: &Snapshot, after: &Snapshot) -> bool {
+        let m = matching(before, after, &[]);
+        match stage_function("a.py", "C.gross", before, after, &[], &m) {
+            Stage::Later(l) => l.has_twin,
+            _ => panic!("expected the function to be left for steps 4-5"),
+        }
+    }
+
+    #[test]
+    fn a_clean_rename_is_not_a_twin_case() {
+        let before = snap(&[("a.py", "h1", vec![def("a.py", "C.gross", BODY)])]);
+        let after = snap(&[("a.py", "h2", vec![def("a.py", "C.gross_total", BODY)])]);
+        assert!(!twin_of(&before, &after));
+    }
+
+    #[test]
+    fn an_unrelated_function_with_another_body_is_not_a_twin() {
+        let before = snap(&[("a.py", "h1", vec![def("a.py", "C.gross", BODY), def("a.py", "C.add", OTHER)])]);
+        let after = snap(&[("a.py", "h2", vec![def("a.py", "C.gross_total", BODY), def("a.py", "C.add", OTHER)])]);
+        assert!(!twin_of(&before, &after));
+    }
+
+    #[test]
+    fn a_matched_twin_counts() {
+        let before = snap(&[("a.py", "h1", vec![def("a.py", "C.gross", BODY), def("a.py", "C.net", BODY)])]);
+        let after = snap(&[("a.py", "h2", vec![def("a.py", "C.gross_total", BODY), def("a.py", "C.net", BODY)])]);
+        assert!(twin_of(&before, &after));
+    }
+
+    #[test]
+    fn an_unmatched_twin_counts() {
+        let before = snap(&[("a.py", "h1", vec![def("a.py", "C.gross", BODY), def("a.py", "C.net", BODY)])]);
+        let after = snap(&[("a.py", "h2", vec![def("a.py", "C.gross_total", BODY), def("a.py", "C.net_total", BODY)])]);
+        assert!(twin_of(&before, &after));
+    }
+
+    #[test]
+    fn a_new_copy_in_the_after_state_counts() {
+        // nothing like it before, but the body now exists twice
+        let before = snap(&[("a.py", "h1", vec![def("a.py", "C.gross", BODY)])]);
+        let after = snap(&[("a.py", "h2", vec![def("a.py", "C.gross_total", BODY), def("b.py", "copy_of_it", BODY)])]);
+        assert!(twin_of(&before, &after));
     }
 }

@@ -1,0 +1,273 @@
+{
+  "c9_builtinGitPresent": true,
+  "c9_gitApiState": "initialized",
+  "c9_checkout": {
+    "before": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "after": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "vscodeGitEvents": 0,
+    "duringRelevantState": [],
+    "firstEventMs": null,
+    "watcherEvents": 1,
+    "watcherSample": [
+      "create /.git/HEAD"
+    ]
+  },
+  "c9_rebase_conflict": {
+    "before": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "after": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "vscodeGitEvents": 0,
+    "duringRelevantState": [],
+    "firstEventMs": null,
+    "watcherEvents": 23,
+    "watcherSample": [
+      "create /.git/rebase-merge",
+      "create /.git/rebase-merge/head-name",
+      "create /.git/rebase-merge/interactive",
+      "create /.git/rebase-merge/onto",
+      "create /.git/rebase-merge/orig-head",
+      "create /.git/HEAD",
+      "create /.git/rebase-merge/author-script",
+      "create /.git/rebase-merge/done"
+    ]
+  },
+  "c9_rebase_rebaseCommitReported": false,
+  "c9_rebase_abort": {
+    "before": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "after": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "vscodeGitEvents": 0,
+    "duringRelevantState": [],
+    "firstEventMs": null,
+    "watcherEvents": 3,
+    "watcherSample": [
+      "create /.git/HEAD",
+      "delete /.git/rebase-merge",
+      "delete /.git/refs/heads/b.lock"
+    ]
+  },
+  "c9_rebase_endNudged": false,
+  "c9_merge_conflict": {
+    "before": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "after": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "vscodeGitEvents": 0,
+    "duringRelevantState": [],
+    "firstEventMs": null,
+    "watcherEvents": 1,
+    "watcherSample": [
+      "create /.git/MERGE_HEAD"
+    ]
+  },
+  "c9_merge_conflictsReported": false,
+  "c9_merge_abort": {
+    "before": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "after": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "vscodeGitEvents": 0,
+    "duringRelevantState": [],
+    "firstEventMs": null,
+    "watcherEvents": 2,
+    "watcherSample": [
+      "delete /.git/MERGE_HEAD",
+      "delete /.git/refs/heads/main.lock"
+    ]
+  },
+  "c9_merge_endNudged": false,
+  "c9_cherrypick_conflict": {
+    "before": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "after": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "vscodeGitEvents": 0,
+    "duringRelevantState": [],
+    "firstEventMs": null,
+    "watcherEvents": 1,
+    "watcherSample": [
+      "create /.git/CHERRY_PICK_HEAD"
+    ]
+  },
+  "c9_cherrypick_conflictsReported": false,
+  "c9_cherrypick_abort": {
+    "before": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "after": {
+      "head": "main",
+      "rebase": null,
+      "merge": 0,
+      "work": 0,
+      "index": 0
+    },
+    "vscodeGitEvents": 0,
+    "duringRelevantState": [],
+    "firstEventMs": null,
+    "watcherEvents": 2,
+    "watcherSample": [
+      "delete /.git/CHERRY_PICK_HEAD",
+      "delete /.git/refs/heads/main.lock"
+    ]
+  },
+  "c9_cherrypick_endNudged": false,
+  "c9_disabled_apiStateAfter": "initialized",
+  "c9_disabled_repositoriesAfter": 0,
+  "c9_disabled_checkout": {
+    "vscodeGitEvents": 0,
+    "watcherEvents": 1,
+    "watcherSample": [
+      "create /.git/HEAD"
+    ]
+  },
+  "c9_disabled_rebaseStart": {
+    "vscodeGitEvents": 0,
+    "watcherSample": [
+      "create /.git/HEAD",
+      "create /.git/HEAD",
+      "create /.git/rebase-merge",
+      "create /.git/rebase-merge/author-script",
+      "create /.git/rebase-merge/done",
+      "create /.git/rebase-merge/drop_redundant_commits",
+      "create /.git/rebase-merge/end",
+      "create /.git/rebase-merge/git-rebase-todo"
+    ]
+  },
+  "c9_disabled_rebaseEnd": {
+    "watcherSample": [
+      "create /.git/HEAD",
+      "delete /.git/rebase-merge",
+      "delete /.git/refs/heads/b.lock"
+    ]
+  },
+  "formatters": {
+    "ms-python.black-formatter": {
+      "version": "2026.6.0",
+      "edits": 22,
+      "wholeDocument": false,
+      "ranges": [
+        "0:10-0:10 (1 chars)",
+        "0:13-0:13 (2 chars)",
+        "1:6-1:7 (0 chars)",
+        "1:9-1:9 (1 chars)",
+        "1:10-1:11 (0 chars)",
+        "2:5-2:5 (1 chars)"
+      ],
+      "documentLines": 13,
+      "fullRange": "13"
+    },
+    "charliermarsh.ruff": {
+      "version": "2026.94.0",
+      "edits": 22,
+      "wholeDocument": false,
+      "ranges": [
+        "0:10-0:10 (1 chars)",
+        "0:13-0:13 (2 chars)",
+        "1:6-1:7 (0 chars)",
+        "1:9-1:9 (1 chars)",
+        "1:10-1:11 (0 chars)",
+        "2:5-2:5 (1 chars)"
+      ],
+      "documentLines": 13,
+      "fullRange": "13"
+    },
+    "ms-python.autopep8": {
+      "version": "2026.4.0",
+      "edits": 22,
+      "wholeDocument": false,
+      "ranges": [
+        "0:10-0:10 (1 chars)",
+        "0:13-0:13 (2 chars)",
+        "1:6-1:7 (0 chars)",
+        "1:9-1:9 (1 chars)",
+        "1:10-1:11 (0 chars)",
+        "2:5-2:5 (1 chars)"
+      ],
+      "documentLines": 13,
+      "fullRange": "13"
+    },
+    "eeyore.yapf": {
+      "version": "2026.1.108140646",
+      "edits": 22,
+      "wholeDocument": false,
+      "ranges": [
+        "0:10-0:10 (1 chars)",
+        "0:13-0:13 (2 chars)",
+        "1:6-1:7 (0 chars)",
+        "1:9-1:9 (1 chars)",
+        "1:10-1:11 (0 chars)",
+        "2:5-2:5 (1 chars)"
+      ],
+      "documentLines": 13,
+      "fullRange": "13"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "vnoc-spike-s4-checks",
+  "displayName": "V-NOC spike S4 checks",
+  "version": "0.0.1",
+  "publisher": "vnoc-spike",
+  "engines": { "vscode": "^1.90.0" },
+  "main": "./out/extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "scripts": { "build": "tsc -p .", "test": "tsc -p . && node out/test/runTest.js" },
+  "devDependencies": {
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/test-electron": "^2.4.0",
+    "mocha": "^10.0.0",
+    "typescript": "^5.6.0"
+  }
+}

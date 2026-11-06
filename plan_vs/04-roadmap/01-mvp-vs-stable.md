@@ -26,10 +26,10 @@ Three releases, each with one job:
 | **Setup** | Quick look; guided setup (scope, team/solo, ID mode); `vnoc.toml` / `local.toml` hand-written + reload | + effective-config view, monorepo package detection (`[[path]]` proposals) | |
 | **Explore** | sidebar tree, canvas with the **node card** (expand · code · zoom), **Canvas \| Code** tabs, **focus stack**, go to code, reveal in V-NOC | + CodeLens, hover preview, search | |
 | **Call trees** | lazy, depth setting, expand, pulled-in files, external leaves | same, tuned on big repos | background prefetch (VS-O8) |
-| **Docs** | **doc panel**: read, edit, add, remove; shared / private; Share / Make private (folder moves) | same | docs on call nodes (VS-O6) |
+| **Docs** | **doc panel**: read, edit, add, remove; shared / private; Share / Make private (folder moves) | + doc freshness (VS-D77) | docs on call nodes (VS-O6) |
 | **Editing in the canvas** | code + docs editable as views of VS Code's document; ⌘S / Ctrl+S | same | completions in the webview |
-| **Identity** | ID mode **`none` only**: permanent IDs live in `.vnoc` folder names; nodes are re-found by the **matching ladder** | + **in-code IDs**: `on-attach` / `all`, `[[path]]` rules, Add / Remove (exact span), Restore / Keep removed, save-time IDs, `# FileID:` | |
-| **Lost nodes** | Missing / Not on this branch (VS-D73), Archive / Relink / Remove, V-NOC trash + Restore, **strong** two-ID merge | + **weak**-match merge prompts, archive expiry (90 days), "Empty V-NOC trash" UI | |
+| **Identity** | ID mode **`none` only**: permanent IDs live in `.vnoc` folder names; nodes are re-found by **step 0** (observed moves, VS-D76) and the **matching ladder** | + **in-code IDs**: `on-attach` / `all`, `[[path]]` rules, Add / Remove (exact span), Restore / Keep removed, save-time IDs, `# FileID:` | |
+| **Lost nodes** | Missing / Not on this branch (VS-D74), Archive / Relink / Remove, V-NOC trash + Restore, **strong** two-ID merge | + **weak**-match merge prompts, archive expiry (90 days), "Empty V-NOC trash" UI | provisional matches (VS-D75: built, off in v1) |
 | **Sync** | auto / manual, startup mtime scan, hash-validated cache | same | Rust file watcher for CLI mode |
 | **Playground** | — | ✅ (VS-P12) | stored runs |
 | **Trust** | Restricted Mode = read-only, no executables from repo files | same | |
@@ -68,7 +68,7 @@ Everything else (the cache schema, the editor ↔ core protocol, the driver prot
 1. **Quick look** shows a canvas in **< 30 s** on a ~1,000-file Python repo, writing nothing into the repo (success criterion 1, `00-01`).
 2. **The refactor suite** (05-spikes/04, turned into tests): docs survive rename-function, move-file, rename-folder, move-and-edit and cut/paste-between-files, with
    **zero wrong silent matches**. Cases the ladder can't solve end in Missing → Find it…, never in a wrong attachment.
-3. **Branch switches don't prompt for docs that live on another branch**; a pulled deletion does (VS-D73). Tested with VS Code open and closed.
+3. **Branch switches don't prompt for docs that live on another branch**; a pulled deletion does (VS-D74). Tested with VS Code open and closed.
 4. **No data loss**: a test suite for Remove / Make private / Share / two-ID merge where every lost file is recoverable (git or the V-NOC trash).
 5. **Editing in the canvas** never corrupts a file in the "type in the card and the editor at once" test (05-spikes/05).
 6. Runs on the four MVP platforms; VSIX < 40 MB per platform (NFR-32).

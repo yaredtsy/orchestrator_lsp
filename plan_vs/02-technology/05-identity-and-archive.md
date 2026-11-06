@@ -104,7 +104,7 @@ class OrderService:
 
 | `id_in_code` | ID in code? | What sync does |
 |---|---|---|
-| `yes` | found | match by it; refresh `path` / `qualname` in `node.toml` |
+| `yes` | found | match by it; refresh `path` / `qualname` in `node.toml` under the anchor-rewrite rule (02-04 §5, VS-D74) |
 | `yes` | **missing** | match by the ladder (§4). If found, the ID was **lost** (deleted by hand, a docstring rewrite, an AI agent) → **one grouped notice**: "3 V-NOC IDs were removed from code. **[Restore]** / **[Keep removed]**". Keep removed sets `never`. |
 | `no` | — | match by the ladder. If the mode later becomes `all`, inject and set `yes`. |
 | `never` | — | match by the ladder; **never inject**, whatever the mode or rule says. |
@@ -177,9 +177,31 @@ should_have_id_in_code(node) =
 | **Remove permanent ID** (one node) | the exact-span removal (§2); `id_in_code = "never"`; docs stay attached by `node.toml` |
 | Solo mode chosen | mode defaults to `none` (VS-D25) |
 
-## 4. Finding a node again: the matching ladder (VS-D44)
+## 4. Finding a node again: step 0, then the matching ladder (VS-D44, VS-D76)
 
-Runs during sync for every permanent ID **not found in code**. That covers `no` / `never`, a lost in-code ID, and non-code files.
+### Step 0: observed moves (VS-D76)
+
+Most renames happen in the editor, where V-NOC can **watch** them instead of guessing. **Principle: step 0 can only fail toward the ladder, never toward a link.**
+
+- **Range tracking.** The core keeps each node's range in every open document and shifts it on each incremental `didChange`. After a reparse, the function at a tracked
+  range **is the same node**, even if its name and body changed.
+- **Only editor edits count.** A change that isn't clearly typed or applied in the editor ends tracking for that whole document. The case that matters is a **disk reload**
+  (a git checkout, an agent writing an open file). Reload test **[check]**: not dirty after the change, a watcher event for the same file, and the buffer text equals the disk
+  content. Undo back to the saved state has no watcher event, so it counts as an editor edit.
+- **Whole-node or whole-document edits** (paste-over, select-all + retype, a formatter): moves observed before the edit stay valid. After it, tracking resumes only for nodes
+  that step 1 matches by exact `path::qualname` in the new text (formatters never rename). An edit spanning two nodes ends tracking for both. Which Python formatter
+  extensions return one whole-document edit **[check]**.
+- **Pending vs saved.** A move in an unsaved buffer is pending, **in memory only**, and becomes real when that document version is saved. Pending moves are dropped on
+  restart; the ladder handles the file.
+- **File renames:** `onWillRenameFiles` / `onDidRenameFiles` update the anchors old → new directly (a folder rename covers every node under it). A `git mv` or a terminal
+  `mv` isn't observed.
+- **Saved observed moves are stored in SQLite and applied first at sync.** Exact, no scores. An observed move is an uncommitted working-tree move, so the anchor-rewrite rule
+  (02-04 §5) lets it update a committed `node.toml`, never on a detached HEAD.
+
+### The ladder
+
+Runs during sync for every permanent ID **not found in code** and **not resolved by step 0**: changes made by git, disk writes by agents or other tools, edits while VS Code
+was closed, and cut/paste between files (no rule; step 4 catches identical bodies). That covers `no` / `never`, a lost in-code ID, and non-code files.
 
 | Step | Signal | Covers |
 |---|---|---|
@@ -190,7 +212,12 @@ Runs during sync for every permanent ID **not found in code**. That covers `no` 
 | 5 | **Similarity score** | a clear winner matches; a close call **asks the user** (threshold: VS-O10) |
 | 6 | No match | **Missing** (or "not on this branch", §5) |
 
-- VS Code's `onDidRenameFiles` events tell steps 2–3 the answer up front, without searching.
+- **Step 4 matches silently only if the body hash is unique** among the unmatched old and the unmatched new functions; duplicates go to step 5 with context, where a tie
+  asks (VS-D73).
+- **Ask-only rules** cap a match at *ask* in steps 4 and 5 (VS-D73): **(a)** an exact twin of the lost body anywhere in the before- or after-state, matched or unmatched
+  (the candidate of a clean rename is not a twin); **(b)** a body under the minimum token count.
+
+**Provisional tier: built, off in v1 (VS-D75).** v1 has a strict silent match, or a question with the top candidate preselected.
 - **The "before" state** (last known paths, hashes, fingerprints) comes from SQLite. **On a fresh clone** (shallow or not) there's no cache, so V-NOC uses `node.toml`'s
   anchors (`path`, `qualname`) **as written** and runs **steps 1 and 6 only**. No git history is read (VS-D72). Anchors that went stale (renamed without V-NOC) show as
   **Missing with "Find it…"** until the next V-NOC user who has a cache fixes them.
@@ -203,7 +230,7 @@ Runs during sync for every permanent ID **not found in code**. That covers `no` 
 > ```
 > Stop at the first `One(..)`. A `Close(..)` becomes the "Find it…" list. Each step is a pure function, so each gets its own table-driven test.
 
-## 5. States, git events, archive (VS-D45, VS-D73)
+## 5. States, git events, archive (VS-D45, VS-D74)
 
 **The problem.** A documented node disappears. Was it deleted, so the user should decide what happens to the docs? Or is it just on another branch and will come back, so the
 user shouldn't be bothered? Timing can't tell, because `git checkout` and `git pull` both move HEAD. So we don't ask how HEAD moved. We ask **where the node's `node.toml` is**:
@@ -211,6 +238,7 @@ user shouldn't be bothered? Timing can't tell, because `git checkout` and `git p
 ```
 for each documented node still absent after the ladder:
     if status = archived                                   → ARCHIVED (the Archived list)
+    else if there's no git repository (gix finds none)     → MISSING
     else if its node.toml is committed in HEAD's tree      → MISSING   (its docs are orphaned in this commit; no history needed, works on shallow clones)
     else  the node FLOATS (private, uncommitted shared, or private notes whose shared node.toml left with the branch):
         no last_seen record (lost cache, only seen detached) → NOT ON THIS BRANCH
@@ -227,7 +255,7 @@ for each documented node still absent after the ladder:
 - **Events:** `vscode.git` only *nudges* on a HEAD change. File events are **debounced (~200 ms) and processed as one batch**.
 - **Pause:** while a rebase, merge or cherry-pick is in progress, reconciling waits and runs once at the end (C9). That's for speed only; correctness doesn't depend on it.
 - **Startup scan:** compare `mtime` and `size` with the cache, and hash only the files that differ.
-- **No git repo:** every disappearance is Missing.
+- **A node found at a new place:** when its `path` / `qualname` in `node.toml` get rewritten is in 02-04 §5 (VS-D74).
 
 ```
                        found again (any ladder step)
@@ -270,7 +298,7 @@ Review → QuickPick:
    ⚠ helpers.py                  src/helpers.py · 1 doc          → [Find it…] [Archive] [Remove]
 ```
 
-One per sync, non-blocking. **Not shown while HEAD is detached**: the nodes are still listed as Missing, just without the notice (VS-D73). Dismissing is safe: the nodes stay Missing with a badge. The "IDs removed from code" notice (§2) is a separate grouped notice.
+One per sync, non-blocking. **Not shown while HEAD is detached**: the nodes are still listed as Missing, just without the notice (VS-D74). Dismissing is safe: the nodes stay Missing with a badge. The "IDs removed from code" notice (§2) is a separate grouped notice.
 
 ## 7. Writing IDs into source (VS-D16, VS-D31, VS-P24)
 

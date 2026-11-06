@@ -1,8 +1,8 @@
 # 05.04: S4 git and matching
 
 **Goal:** docs survive refactors and branch switches in `none` mode (no in-code IDs): the MVP's hardest promise.
-**Answers:** B6 (VS Code nudges, Rust reads git), C9 (`vscode.git` API behaviour + the pause rule), C14 (gix: ancestry speed, shallow behaviour), VS-O10 (the similarity rule).
-**Dropped (VS-D72):** C19 (the fresh-clone history walk) and the per-branch-tip file check.
+**Answers:** B6 (VS Code nudges, Rust reads git), C9 (`vscode.git` API behaviour + the pause rule, for speed only), C14 (the three gix lookups), VS-O10 (the similarity rule).
+**Dropped (VS-D72, VS-D74):** C19 (the fresh-clone history walk), the per-branch-tip file check, the ancestry timing, the commit-graph comparison and the shallow-clone check.
 **Time box:** 3 days. **Code:** `spikes/s4-git/`. **Needs:** S1; the S2 driver for fingerprints (`vnoc/defs`).
 
 **Order (decided):** (1) the ladder first, because its results may change the default ID mode; (2) gix; (3) C9. Git sits behind a small `GitBackend` trait; the first implementation calls the `git` binary.
@@ -16,33 +16,38 @@
    same file, same class, parameter-name overlap, name similarity. **A silent match needs all of:** score above a threshold, a **margin** over the second best, **same file or same class**, and a body of at least a
    **minimum token count**. Anything else asks the user. **Rule: zero wrong silent matches** (a wrong silent match is worse than a question). Tune on a **labelled set** built from real functions of open-source repos
    (`gen_labelled.py`: each function renamed and edited by 0-70%, placed in the same scope / another file / module level, plus a "deleted" variant), tune on some repos and **validate on others**.
-3. **gix behind the same trait:** ancestry, branch tips, `exists`/read a file at a commit. Anything slow or missing **falls back to the git binary through the same trait**; record which operations needed the fallback.
-4. **C14, timings:** `is_ancestor` on django **with and without a commit-graph**. A shallow copy (LightRAG) must show that ancestry **fails safely** when history is missing (no panic, no wrong state).
-5. **The HEAD-change rule (VS-D72):** new HEAD descends from old → *Missing*; else old HEAD still the tip of a local branch → *not on this branch*; else → *Missing*. No history walk, no file reads. Test each branch case with the project **open and closed**:
-   checkout to a branch without the function · pull a teammate's deletion · rebase onto an upstream that deleted it · reset.
+3. **gix behind the same trait:** the three lookups VS-D74 needs: a path in HEAD's tree, the current branch, the local branch list. Anything slow or missing **falls back to the git binary through the same trait**; record which operations needed the fallback.
+4. **C14, timings:** the three lookups on django, and on the shallow LightRAG copy (no history needed, so it should behave the same).
+5. **The Missing / not-on-this-branch rule (VS-D74).** Test each case with the project **open and closed**: checkout to a branch without the function (docs committed on the other branch;
+   docs committed on this one) · pull a teammate's deletion · rebase onto an upstream that deleted it · reset · a private-only node · a deleted branch · a detached HEAD (no notice).
 6. **C9 and the pause rule.** What does `vscode.git` report during a rebase or merge in progress, and with `git.enabled = false`? Does our nudge still arrive? **Rule:** while a rebase, merge or cherry-pick is in progress
-   (`.git/rebase-merge`, `.git/rebase-apply`, `MERGE_HEAD`, `CHERRY_PICK_HEAD`), **pause reconciling and run it once when the operation finishes.**
+   (`.git/rebase-merge`, `.git/rebase-apply`, `MERGE_HEAD`, `CHERRY_PICK_HEAD`), **pause reconciling and run it once when the operation finishes.** For speed only: correctness doesn't depend on it (VS-D74).
 
-> **🦀 Rust note: the ancestry test with gix.**
-> `git merge-base --is-ancestor old new` asks: "is `old` reachable by walking parents from `new`?" With gix that's a walk over the commit graph from `new`, stopping when it
-> finds `old` or runs out of commits older than `old`. gix can use the **commit-graph** file (`.git/objects/info/commit-graph`) when present, which is what keeps this fast on
-> big histories. Step 4 measures whether that's enough.
+> **🦀 Rust note: the three lookups with gix.**
+> Nothing here walks history, so a shallow clone is no special case:
+> ```rust
+> let repo = gix::discover(root)?;                          // Err → no git repository → Missing
+> let branch = repo.head_name()?;                           // None → detached HEAD
+> let tree = repo.head_commit()?.tree()?;
+> let committed = tree.lookup_entry_by_path("…/node.toml")?.is_some();
+> let local: Vec<_> = repo.references()?.local_branches()?.collect();
+> ```
 
 ## Measure
 
-- `is_ancestor` time with and without a commit-graph (C14); which gix operations needed the git-binary fallback.
+- The time of the three lookups (C14); which gix operations needed the git-binary fallback.
 - A table: refactor × ladder step that matched (or Missing). This table becomes the MVP's refactor test suite (04-01 exit criterion 2).
 
 ## Pass / fail
 
-- ✅ No branch switch prompts; the pulled deletion prompts; rebase and reset go straight to Missing (VS-D72).
+- ✅ Every case in step 5 lands where VS-D74 says: docs on another branch don't prompt; the pulled deletion prompts; nothing prompts on a detached HEAD.
 - ✅ Zero wrong silent matches on the fixtures; a threshold chosen for VS-O10.
 - ✅ B6, C9, C14 have answers below; VS-O10 has a rule whose threshold was validated on repos it was not tuned on.
 - ✅ The pause rule: a rebase, merge or cherry-pick in progress pauses reconciling, and it runs once at the end.
 
 ## Findings
 
-*In progress (2026-11-06). Done: the ladder, the six fixtures (+ 2 extra), VS-O10 on the labelled set. Not done yet: gix and the django timings (C14), C9 and the pause rule.
+*In progress (2026-11-06). Done: the ladder, the six fixtures (+ 2 extra), VS-O10 on the labelled set. Not done yet: the three gix lookups (C14), C9 and the pause rule.
 Code: `spikes/s4-git/` (`spike-match`: `fixtures`, `tune`; `gen_labelled.py`). The S2 driver gained `vnoc/defs` (per-def fingerprints).*
 
 **Ladder fixtures (git CLI behind `GitBackend`; nine documented nodes; both scores behave the same here):**
@@ -68,7 +73,48 @@ Code: `spikes/s4-git/` (`spike-match`: `fixtures`, `tune`; `gen_labelled.py`). T
 - Names and parameters: name similarity of the true successor is flat at 0.64 (the generator renames every function), the parameter overlap falls with the edit level (1.00 to 0.04).
 - **Consequence for the default ID mode:** without in-code IDs, a function that is renamed **and** edited in one commit becomes a "Find it…" question. Nothing is lost, and the answer is nearly always first in the list.
 - **Twin cases** (the lost function has an identical twin in the corpus; 191 of 4,884 train cases, 388 of 4,711 held-out): under VS-D73 alone, **95 of 191 train twin cases and 51 of 388 held-out ones are silently wrong** (a new copy of the still-existing twin looks like the lost function's successor).
-  Experiment: if a lost body with an identical twin anywhere **only asks** (never silent), twin wrong goes to **0** and silent-right drops from 446 to 444 (Edit) / 530 to 526 (Jaccard). Not adopted yet: waiting for your decision.
+  Experiment: if a lost body with an identical twin anywhere **only asks** (never silent), twin wrong goes to **0** and silent-right drops from 446 to 444 (Edit) / 530 to 526 (Jaccard). **Adopted:** VS-D73's ask-only rules.
+
+**Provisional tier (VS-D75).** *Measured on the synthetic labelled set (functions renamed and edited by a script). Not a decision input for v1: the tier is built and off (VS-D75). Re-measure on unobserved moves from real testers.*
+
+**Code was restructured first, with no behaviour change** (the fixtures and 82 lines of tuning output are identical to the saved baseline), so the tiers are now one pure function (`ladder/policy.rs`, with tests) and the tuning harness calls the same `resolve` the ladder uses. See `spikes/s4-git/spike-match/README.md`.
+
+**Measurement.** Cases that stay a *soft* question under the silent rule (the score or the lead is not good enough; not a twin, not a short body): 4,086 train, 3,729 held-out. For each, the top candidate by Edit score.
+
+Top-1 accuracy per Edit-score band, **lead over the second >= 0.10** (train / held-out):
+| band | train | held-out |
+|---|---|---|
+| 0.50-0.55 | 95% (94 cases) | 99% (154) |
+| 0.55-0.60 | 98% (327) | 99% (424) |
+| 0.60-0.65 | 100% (425) | 98% (484) |
+| 0.65-0.70 | 93% (238) | 92% (202) |
+| 0.75-0.80 | 91% (335) | 97% (301) |
+| 0.80-0.85 | 71% (160) | 79% (205) |
+| 0.85-0.90 | 77% (452) | 94% (371) |
+| 0.90-0.95 | 70% (699) | 90% (527) |
+| 0.95-1.00 | 68% (379) | 100% (277) |
+
+**No floor reaches 95% top-1 accuracy.** Accuracy is **not monotone in the score**: a floor includes every band above it, and the high bands are the polluted ones. What a floor can reach (train / held-out):
+| target | floor / lead | links | accuracy |
+|---|---|---|---|
+| 99%, 95% | none reaches it | | |
+| 90% | 0.50 / 0.30 | 2,183 / 2,397 | 91.0% / 98.4% |
+| 85% | 0.45 / 0.20 | 2,681 / 2,757 | 85.6% / 96.8% |
+| 80% | 0.30 / 0.10 | 3,231 / 3,115 | 82.3% / 93.9% |
+
+**Why the high bands are wrong** (Edit >= 0.80, lead >= 0.10): edits of 0-5%: **654 of 654 right** (train), 658 of 658 (held-out). Edits of 10-20%: 87% / 97% right. Edits of **35%+: 9 of 367 right** (0 of 86 held-out): the true successor only scores ~0.6, so a candidate at >= 0.80 is a lookalike. The simulation plants one on purpose (a copy of the closest sibling in the same file). In the 41 + 11 *deleted* cases any link is wrong.
+
+**What would move from ask to provisional** (of 4,354 asked, train / of 4,134, held-out):
+| floor / lead | moved | right | wrong (of which for a deleted function) |
+|---|---|---|---|
+| 0.50 / 0.30 | 2,183 / 2,397 | 1,987 / 2,359 | 196 (42) / 38 (14) |
+| 0.45 / 0.20 | 2,681 / 2,757 | 2,296 / 2,670 | 385 (54) / 87 (27) |
+| 0.30 / 0.10 | 3,231 / 3,115 | 2,659 / 2,924 | 572 (80) / 191 (44) |
+Silent matches are unchanged (444 train, 423 held-out).
+
+On the refactor fixtures, with floor 0.30 / lead 0.10 the one miss (rename a function **and** rewrite its body) becomes a **provisional, right** link; the twin methods still ask (`[Twin]`).
+
+**Decided:** no floor in v1 (VS-D75). Neither the 90% floor (0.50 / lead 0.30) nor a near-twin rule is adopted for now; both stay as ideas for the real-data revisit.
 
 
 

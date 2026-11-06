@@ -27,12 +27,13 @@ PHASE 4   later (driver downloads, TS/JS, MCP / CLI…)
 | **M1** | Driver host (copy-on-first-run, lookup, handshake), structure index of the scope, SQLite cache, **sidebar tree**, **Quick look**, Go to code, Restricted Mode | right-click ▸ Quick look ▸ browse the tree | S2 | 06-03, 07-01…03, 08-01, 08-02 |
 | **M2** | **Canvas**: node card (expand · code view · zoom), **Canvas \| Code** tabs, **focus stack**, Reveal in V-NOC, auto / manual sync | explore visually; focus, Back, breadcrumbs | S1 | 09-01, 09-02 |
 | **M3** | **Docs**: guided setup, `vnoc.toml` / `local.toml`, `.gitignore` per mode, `node.toml`, **doc panel** (read, add, remove), shared / private, Share / Make private | document code and share it through git | — | 06-04, 08-02 |
-| **M4** | **Docs survive**: matching ladder, Missing / Not on this branch (VS-D73) / Archive / Relink / Remove, V-NOC trash + Restore, strong two-ID merge | refactor and switch branches without losing docs | S4, S3 (trash) | 06-05, 06-06 |
+| **M4** | **Docs survive**: step 0 (observed moves, VS-D76) + matching ladder, Missing / Not on this branch (VS-D74) / Archive / Relink / Remove, V-NOC trash + Restore, strong two-ID merge | refactor and switch branches without losing docs | S4, S3 (trash) | 06-05, 06-06, 08-03 |
 | **M5** | **Call trees**: lazy, depth setting, expand, pulled-in files, external leaves, markers | open any function's call tree | S2 | 06-07 |
 | **M6** | **Editing in the canvas**: code (card, dialog, Code tab) and docs as views of VS Code's document; ⌘S / Ctrl+S; the version race | edit code and docs without leaving the canvas | S5 | 08-03, 09-03 |
 | ⭐ | **MVP `0.1` pre-release** on both stores, once the exit criteria in 04-01 hold | | | 10-01, 10-02 |
 
 **Why this order:** each step needs the one before it to be visible. Tree (M1) → canvas (M2) → docs to attach (M3) → docs that survive (M4).
+**Step 0 ships in the same milestone as the ladder (M4), never after it** (VS-D76).
 Call trees (M5) and canvas editing (M6) are independent of M3–M4 and can be swapped if one is blocked.
 
 ## Stable milestones (→ `1.0`)
@@ -41,7 +42,7 @@ Call trees (M5) and canvas editing (M6) are independent of M3–M4 and can be sw
 |---|---|---|---|---|
 | **M7** | **In-code IDs**: driver placement (docstring `ID:`, `# FileID:`), `on-attach` / `all`, `[[path]]` rules, Add / Remove (exact span), Restore / Keep removed, previews, save-time IDs (precomputed) | make docs survive *any* refactor | S3 | 06-06, 07-03, 08-03 |
 | **M8** | **Playground** (VS-P12) | try a function on its own | — | 08-02 |
-| **M9** | **Polish**: CodeLens, hover, search, effective-config view, package detection, archive expiry + "Empty V-NOC trash", weak-match prompts, `vnoc driver install <file>` | use it every day | — | 08-02, 09-02 |
+| **M9** | **Polish**: CodeLens, hover, search, effective-config view, package detection, archive expiry + "Empty V-NOC trash", doc freshness (VS-D77), weak-match prompts, `vnoc driver install <file>` | use it every day | — | 08-02, 09-02 |
 | **M10** | **Hardening**: 10k-file performance, Linux arm64, Remote SSH / WSL / dev containers, schema-mismatch tests from every 0.x, driver protocol frozen at `1`, user guide | trust it on any machine | — | 10-02 |
 | ⭐ | **`1.0` stable**, once the exit criteria in 04-01 hold | | | |
 

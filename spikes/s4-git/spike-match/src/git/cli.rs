@@ -5,7 +5,7 @@ use std::process::Command;
 
 use anyhow::{Context, anyhow};
 
-use super::{GitBackend, Rename};
+use super::{BranchLookups, GitBackend, Rename};
 
 pub struct CliGit {
     pub dir: PathBuf,
@@ -24,6 +24,13 @@ impl CliGit {
             return Err(anyhow!("git {args:?}: {}", String::from_utf8_lossy(&o.stderr)));
         }
         Ok(String::from_utf8_lossy(&o.stdout).trim_end().to_string())
+    }
+}
+
+impl CliGit {
+    /// The git directory (`.git`, or the real one for a worktree).
+    pub fn git_dir(&self) -> anyhow::Result<PathBuf> {
+        Ok(PathBuf::from(self.ok_text(&["rev-parse", "--absolute-git-dir"])?))
     }
 }
 
@@ -53,23 +60,26 @@ impl GitBackend for CliGit {
             })
             .collect())
     }
-    fn is_ancestor(&self, old: &str, new: &str) -> anyhow::Result<bool> {
-        let o = self.run(&["merge-base", "--is-ancestor", old, new])?;
-        match o.status.code() {
-            Some(0) => Ok(true),
-            Some(1) => Ok(false),
-            _ => Err(anyhow!("merge-base: {}", String::from_utf8_lossy(&o.stderr))),
-        }
+}
+
+impl BranchLookups for CliGit {
+    fn name(&self) -> &'static str {
+        "git (cli)"
     }
-    fn has_commit(&self, rev: &str) -> anyhow::Result<bool> {
-        Ok(self.run(&["cat-file", "-e", &format!("{rev}^{{commit}}")])?.status.success())
+    fn is_repo(&self) -> bool {
+        self.run(&["rev-parse", "--git-dir"]).map(|o| o.status.success()).unwrap_or(false)
     }
-    fn local_branch_tips(&self) -> anyhow::Result<Vec<(String, String)>> {
-        let t = self.ok_text(&["for-each-ref", "--format=%(refname:short) %(objectname)", "refs/heads"])?;
-        Ok(t.lines().filter_map(|l| l.split_once(' ').map(|(a, b)| (a.to_string(), b.to_string()))).collect())
+    fn path_in_head(&self, path: &str) -> anyhow::Result<bool> {
+        // `HEAD:path` fails both when the path is absent and when HEAD has no commit: both mean "not in HEAD's tree"
+        Ok(self.run(&["cat-file", "-e", &format!("HEAD:{path}")])?.status.success())
     }
-    fn last_commit_touching(&self, rev: &str, path: &str) -> anyhow::Result<Option<String>> {
-        let t = self.ok_text(&["log", "-1", "--format=%H", rev, "--", path])?;
-        Ok((!t.is_empty()).then_some(t))
+    fn current_branch(&self) -> anyhow::Result<Option<String>> {
+        let o = self.run(&["symbolic-ref", "--short", "-q", "HEAD"])?;
+        Ok(o.status.success().then(|| String::from_utf8_lossy(&o.stdout).trim().to_string()))
+    }
+    fn local_branches(&self) -> anyhow::Result<Vec<String>> {
+        let mut v: Vec<String> = self.ok_text(&["for-each-ref", "--format=%(refname:short)", "refs/heads"])?.lines().map(String::from).collect();
+        v.sort();
+        Ok(v)
     }
 }

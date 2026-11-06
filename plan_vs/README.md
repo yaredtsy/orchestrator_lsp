@@ -26,7 +26,7 @@ User installs "V-NOC" (VS Code Marketplace, or Open VSX for Cursor / Windsurf / 
 ├── A. OPENS A FOLDER
 │   ├── A1. .vnoc/vnoc.toml exists ──► index on open (if configured) ──► C
 │   │     ├── untrusted workspace ──► read-only: index + browse; no code edits, no playground runs
-│   │     └── HEAD moved while VS Code was closed ──► the same rule as E4/E5 (VS-D73)
+│   │     └── HEAD moved while VS Code was closed ──► the same rule as E4/E5 (VS-D74)
 │   ├── A2. no .vnoc/ ──► stay quiet; the V-NOC view offers "Set up" / "Quick look"
 │   └── A3. a needed language driver is missing ──► "Install the X driver?" (always the user's choice)
 │
@@ -46,7 +46,7 @@ User installs "V-NOC" (VS Code Marketplace, or Open VSX for Cursor / Windsurf / 
 │   ├── C2. Canvas            open any node as a graph; double-click = focus
 │   │     ├── node card       [▸] expand · [</>] code inside the card · [⤢] zoom dialog · 🔗 ID · 📄 docs
 │   │     ├── tabs            Canvas | Code   (code editable everywhere; ⌘S/Ctrl+S saves the focused one)
-│   │     ├── doc panel       [📄 Docs] toggle: the selected node's docs · read · edit · [+ Add] · [🗑 Remove]
+│   │     ├── doc panel       [📄 Docs] toggle: the selected node's docs · read · edit · [+ Add] · [🗑 Remove] · "code changed since…" (VS-D77)
 │   │     └── ★ Focus stack   focus · Back · Clear · click the breadcrumb to jump
 │   ├── C3. Call tree         lazy only: open ▸ N levels ▸ expand ▸ N more   (N = a setting, default 3)
 │   │     ├── calls leaving the scope are still followed; those repo files get pulled in, never ID'd
@@ -68,12 +68,12 @@ User installs "V-NOC" (VS Code Marketplace, or Open VSX for Cursor / Windsurf / 
 │   │   manual sync: "V-NOC: 12 changed · Sync"  (call trees stay correct anyway)
 │   ├── E2. `all` rule: new functions get their ID inside YOUR save (one save, one undo)
 │   │        (manual + focus-out saves; not auto-save mid-typing; only functions without syntax errors)
-│   ├── E3. documented node found again (ID comment / path / hash / git rename / body hash) ──► silent
+│   ├── E3. documented node found again (edits watched in the editor, VS-D76; else ID comment / path / hash / git rename / body hash) ──► silent
 │   │        └── ID comments deleted by hand ──► one notice: Restore / Keep removed
-│   ├── E4. branch switch: gone nodes whose docs live on another branch ──► "not on this branch", NO prompt (VS-D73)
-│   └── E5. gone, and its docs are orphaned in this commit (edit, pull, rebase…) ──► "Missing" + one grouped notification (VS-D73)
+│   ├── E4. branch switch: gone nodes whose docs live on another branch ──► "not on this branch", NO prompt (VS-D74)
+│   └── E5. gone, and its docs are orphaned in this commit (edit, pull, rebase…) ──► "Missing" + one grouped notification (VS-D74)
 │         ├── [Archive]  ──► soft-deleted in place, waits ──► [Relink to…] ──► active again (or expires after N days)
-│         ├── [Find it…] ──► pick the node it became
+│         ├── [Find it…] ──► pick the node it became (top candidate preselected, VS-D75)
 │         └── [Remove]   ──► move it and its docs to .vnoc/local/trash/ (confirmed; restorable from "Recently removed"; V-NOC never empties it)
 │
 ├── F. CHANGES SETTINGS ANY TIME  ("for the team or just me?" → vnoc.toml or local.toml)

@@ -135,10 +135,14 @@ So sharing or un-sharing is a **move**. Only an explicit **mode switch** rewrite
   ---
   node: 0Q8V5W4T2F7KX9M3B6D1RZ4H7K
   hint: src/orders.py::OrderService.parse_order
+  body_hash: 9QX4M2…                  # functions and methods only (VS-D77)
   ---
   # Why we parse twice
   ```
   `hint` is rewritten only when the user saves that doc, and is **never used for lookup**. If `node:` and the folder disagree (a file moved by hand), **the folder wins**, and `node:` is fixed on the next save.
+- **`body_hash` (VS-D77):** the node's normalised body hash (whitespace, comments, docstrings and V-NOC `ID:` lines stripped), written when the doc is saved. If the code's
+  hash differs later, the doc shows **"Code changed since this doc was last edited"**; **"Still accurate"** rewrites it without editing the doc. It lives here, per doc, so it
+  travels to teammates and fresh clones: not in `node.toml` (it may be on the other side from a private doc, and every doc on the node shares it), not in SQLite (per machine).
 - **Links between docs:** `vnoc://node/<id>`. The cache keeps them in a `doc_links` table for "what links here".
 
 > **🦀 Rust note: why Crockford base32.** 26 characters, no I, L, O, U, **uppercase only**, which is safe on case-insensitive macOS/Windows file systems. Two IDs that differ
@@ -166,8 +170,12 @@ otherwise LOCAL.
 
 - **All node state lives in that one file.** Archive is a fact about the **node**, so the team's archive decision also covers my private notes on the same node.
 - The side changes when the rule's answer changes. Sharing the first doc moves `node.toml` to shared; making the last shared doc private moves it back. Both moves are `WorkspaceEdit.renameFile`.
-- **`path` and `qualname` are kept current**, even when `id_in_code = "yes"`. That's what lets a fresh clone without the comment find the node.
-  They're rewritten only when a sync **confirms a move** (working-tree change or forward HEAD), never for "not on this branch".
+- **`path` and `qualname` are the node's anchor**, kept even when `id_in_code = "yes"`. That's what lets a fresh clone without the comment find the node.
+  After the ladder finds a move, they're rewritten only in these cases (VS-D74):
+  - **committed `node.toml`:** only for moves in **uncommitted working-tree changes**. A move already committed in HEAD (a teammate's rename, a commit made while
+    V-NOC wasn't running) stays in SQLite, and the node offers an **"Update anchors"** action.
+  - **floating `node.toml`** (local, or shared but not committed): only when HEAD is on the node's last-seen branch.
+  - **never on a detached HEAD**, and never for "not on this branch".
 - Not stored, on purpose: Missing / not-on-this-branch (computed per machine), hashes and fingerprints (cache), "last seen" times (they'd change on every sync).
 
 ## 6. Two IDs that point at one node (VS-D40)
@@ -223,7 +231,8 @@ The facts above were measured in spike S3 on **macOS only**.
 | `expansion_deps(fn_key, ctx_key, version, file_path, file_hash)`, `callers` | what each expansion depends on |
 | parsed `.vnoc` files, keyed by mtime | so startup doesn't re-read every `node.toml` |
 | `key_moves(old_key, new_key, at_sync)` | location-key renames seen by sync, so saved canvas tabs can translate their keys when restored (VS-D64). Chains are followed (`a → b → c`); rows older than `cache_days` are dropped |
-| `last_seen(id, branch)` | the last branch each node was seen on, for floating nodes (VS-D73) |
+| `last_seen(id, branch)` | the last branch each node was seen on, for floating nodes (VS-D74) |
+| saved observed moves | applied first at sync (VS-D76). SQLite only, never in `.vnoc/` |
 
 **Validation, not deletion:**
 
@@ -257,9 +266,9 @@ The facts above were measured in spike S3 on **macOS only**.
 | 5 | …and both **inject the ID** into the docstring | The **same `ID:` line** at the same spot → git merges identical changes cleanly. |
 | 5b | Attach on branch A, rename the function on branch B, attach again on B | Different inputs → two IDs → two folders. Sync sees a strong match → smaller ID wins, folders merged (§6). |
 | 6 | A rename on one branch, a doc added on another | In-code ID finds it; else the ladder (02-05 §4); else Missing → Find it… |
-| 7 | **Switching branches** | Docs that live on the other branch: **not Missing**, "Not on this branch", silently. Missing only if the checked-out commit itself orphans them (VS-D73). |
+| 7 | **Switching branches** | Docs that live on the other branch: **not Missing**, "Not on this branch", silently. Missing only if the checked-out commit itself orphans them (VS-D74). |
 | 7b | **Pulling a teammate's deletion** | **Missing** (the shared `node.toml` is still in HEAD's tree), unless their archive/remove of the shared `node.toml` came in the same pull. |
 | 8 | `vnoc.toml` edited on two branches | Normal TOML conflict. `local.toml` is never shared, so it never conflicts. |
-| 9 | A teammate renamed a documented function and their V-NOC wasn't running | Every teammate's sync updates the same `node.toml` the same way → identical uncommitted changes that merge cleanly, but they show in `git status` after the pull (R5). |
+| 9 | A teammate renamed a documented function and their V-NOC wasn't running | The move is already committed in HEAD, so no one's sync rewrites `node.toml`: the new place stays in SQLite and the node offers **"Update anchors"** (§5, VS-D74). Nothing shows up in `git status` after the pull (R5). |
 
 Next: [`05-identity-and-archive.md`](05-identity-and-archive.md)

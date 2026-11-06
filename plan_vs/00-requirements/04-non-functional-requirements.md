@@ -26,7 +26,7 @@ The numbers are **targets to confirm** 🟡. We'll measure them on a fixture cor
 | NFR-14 | A crash of the Rust sidecar never takes VS Code down; it's restarted automatically (with backoff), and the UI shows "V-NOC restarting". |
 | NFR-15 | **No network access except driver downloads the user asked for** (signed manifest + minisign-verified files, VS-D29). No telemetry in v1. |
 | NFR-16 | Respect VS Code **Workspace Trust** (VS-D18): in Restricted Mode, read-only indexing only. No source edits, no playground runs, no user-data writes, and `vnoc.server.path` is ignored from workspace settings. |
-| NFR-17 | **A branch switch never prompts for docs that live on another branch.** A Missing notification needs docs orphaned in the checked-out commit (or a floating node whose branch is current or gone), and never appears while HEAD is detached (VS-D73). |
+| NFR-17 | **A branch switch never prompts for docs that live on another branch.** A Missing notification needs docs orphaned in the checked-out commit (or a floating node whose branch is current or gone), and never appears while HEAD is detached (VS-D74). |
 | NFR-19 | **Remove never destroys content git doesn't have**: anything not in HEAD goes to a trash first (VS-D35). |
 | NFR-18 | A driver release can **never break an installed core**: cores only install driver versions whose protocol they speak (VS-D29.1). |
 

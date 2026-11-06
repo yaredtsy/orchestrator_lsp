@@ -49,7 +49,7 @@ webview                          extension host                       sidecar
 ```
 
 - **Requests** that need data are passed through to Rust *unchanged* (same method names, same generated types).
-- **Commands** that need VS Code (open an editor, run a terminal, show a QuickPick) are handled by the host.
+- **Commands** that need VS Code (open an editor, run a terminal, show a QuickPick) are handled by the host. The **"Find it…"** QuickPick (02-05 §6) **preselects the top candidate** (VS-D75).
 - The host keeps an allow-list of methods the webview may call. A webview is a web page, so we don't let it call anything it likes.
 
 ## The node card and the Canvas | Code tabs (VS-D48, your round-5 note)
@@ -111,6 +111,7 @@ Docs are **visible on the canvas**, next to the graph, as in the web V-NOC (`Doc
 | **[🗑 Remove]** | confirm, then move to the V-NOC trash (VS-D70) |
 | ⋯ menu | rename, Share this doc / Make private (a move, VS-D58), Open beside (a regular VS Code editor in the next column) |
 | Viewer | rendered Markdown (`react-markdown`, ported); `vnoc://node/<id>` links focus that node |
+| Freshness label | **"Code changed since this doc was last edited"** when the node's body hash no longer matches the doc's; **[Still accurate]** clears it without editing the doc (VS-D77, M9) |
 | **[✎] Edit** | switches the doc to an **editable Markdown source view in the panel**, under the same rule as code (below): a view of VS Code's document |
 
 **Why not BlockNote (the old editor) for editing:** it stores blocks and converts to Markdown on save, which is **lossy**. It would rewrite a teammate's hand-written `.md`

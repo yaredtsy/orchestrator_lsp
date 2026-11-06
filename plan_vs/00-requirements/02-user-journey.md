@@ -38,7 +38,7 @@ The *how* is in `02-technology/`. FR-xx numbers point to [`03-functional-require
 |---|---|---|
 | A1 | `.vnoc/vnoc.toml` exists and `index.on_open = true`: status bar "V-NOC: indexing…", then the sidebar fills. | Activation via `workspaceContains:.vnoc/vnoc.toml` → spawn the core → `initialize` (root, storage, trust, **current git HEAD**, proxy) → driver found in the global drivers folder → cache reused or rebuilt. |
 | A1-untrusted | Same, plus a line in the sidebar: "Restricted Mode: read-only". | Indexing is read-only, so it's allowed. No source edits, no playground runs, no `.vnoc/` writes except the cache (VS-D18). |
-| A1-closed-head | HEAD moved while VS Code was closed. | Nothing special: the next sync applies the same rule as any other (VS-D73). It never depends on how HEAD moved. |
+| A1-closed-head | HEAD moved while VS Code was closed. | Nothing special: the next sync applies the same rule as any other (VS-D74). It never depends on how HEAD moved. |
 | A1-no-driver | The project lists a language whose driver isn't installed. | "This project uses TypeScript. Install the TypeScript driver (12 MB)? [Install] [Not now]". Never automatic (02-07). v1 only has Python, which is bundled. |
 | A2 | No `.vnoc/`: nothing pops up. The V-NOC Activity Bar view says "Set up a project or take a quick look". | Nothing runs until the user touches it (FR-04). |
 
@@ -119,8 +119,10 @@ Both are `WorkspaceEdit`s (undoable), never direct disk writes (VS-D16). Disable
 | E1-manual | Same, **manual sync** | Status bar `V-NOC: 12 changed · Sync`. Call trees stay correct (checked against file hashes when read). Structure, new nodes, Missing and IDs wait for Sync (VS-D22). |
 | E1-save | Saves a file under an **`all`** rule with a new function | The ID line appears **as part of that save** (one save, one undo step), on manual saves and on auto-save when leaving the editor (`FocusOut`). Auto-save during a typing pause (`AfterDelay`) skips it. Functions with syntax errors are skipped (VS-D31). |
 | E2 | A documented node moved or was renamed and was found again | Nothing. The docs are still there. |
-| E3 | A documented node is gone and its docs are **orphaned in this commit** (an edit, a pull, a rebase…) (VS-D73) | **Missing** (⚠) + one grouped notification per sync (none while HEAD is detached): "2 documented nodes can't be found [Review]" → **Archive / Find it… / Remove** per node. |
-| E4 | **Switches branch**, and a documented node isn't on the new one | **Nothing pops up** when the node's docs live on another branch: it moves to a quiet "Not on this branch" list and comes back on its own when the code does. If the checked-out commit has the node's `node.toml` but not its code, it's Missing, as in E3 (VS-D73). |
+| E2-editor | Renames a function **and** rewrites its body in the editor, then saves | Nothing. V-NOC watched the edit (step 0), so the docs follow exactly (VS-D76). |
+| E2b | The same rename + rewrite happens **outside** the editor (a pull, an agent, VS Code closed) | **Missing → Find it…**, with the top candidate preselected (VS-D75). |
+| E3 | A documented node is gone and its docs are **orphaned in this commit** (an edit, a pull, a rebase…) (VS-D74) | **Missing** (⚠) + one grouped notification per sync (none while HEAD is detached): "2 documented nodes can't be found [Review]" → **Archive / Find it… / Remove** per node. |
+| E4 | **Switches branch**, and a documented node isn't on the new one | **Nothing pops up** when the node's docs live on another branch: it moves to a quiet "Not on this branch" list and comes back on its own when the code does. If the checked-out commit has the node's `node.toml` but not its code, it's Missing, as in E3 (VS-D74). |
 | E4b | **Pulls a teammate's deletion** | Missing + the normal prompt, unless the teammate already archived or removed that node (their decision arrives with the pull). |
 | — | A node **without** user data disappears | Nothing. It's cache. |
 

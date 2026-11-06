@@ -135,6 +135,7 @@ Proxy: not our own setting. The extension passes VS Code's `http.proxy` / `http.
 | Attach doc / New playground | a file on the chosen side (+ 1 ID line if the rules say so) | trusted |
 | Share this doc / Make private | moves the file between sides (and `node.toml` if 02-04 §5 says so) | trusted |
 | Archive / Relink / Remove | `node.toml` (+ files on Remove) | trusted |
+| Update anchors | `node.toml`'s `path` / `qualname`, from the move sync found but didn't write (02-04 §5, VS-D74) | trusted; a move already committed in HEAD |
 
 ## Personas → defaults
 

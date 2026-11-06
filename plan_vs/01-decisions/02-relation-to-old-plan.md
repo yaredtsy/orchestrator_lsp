@@ -55,7 +55,7 @@ Legend: **✅ reuse** (read it as-is) · **✏️ change** (still the base, with
 |---|---|---|
 | 00-overview.md, 02-scan.md, 03-snapshot.md, 04-structure-diff.md, 05-code-element-diff.md | ✅ | The pipeline is the same. |
 | 01-project-lifecycle.md | ✏️ | No registry DB. A project = a folder with `.vnoc/`, or a quick look. |
-| 06-moves-and-tombstones.md | ✏️ | Reconcile is the same; what happens to leftovers differs: dropped (no user data), **not on this branch**, or **Missing**: see VS-D73. Plus a new signal: VS Code rename events. plan/P21's "mass tombstone" guard is replaced by VS-D73. |
+| 06-moves-and-tombstones.md | ✏️ | Reconcile is the same; what happens to leftovers differs: dropped (no user data), **not on this branch**, or **Missing**: see VS-D74. Plus a new signal: VS Code rename events. plan/P21's "mass tombstone" guard is replaced by VS-D74. |
 | 07-call-graph-sync.md | ✏️ | Layer 1 / layer 2 stay. Layer 2 is materialised **only for opened branches** (lazy). Invalidation by `reaches` stays. |
 | 08-groups.md | ❌ (later) | VS-P15. |
 | 09-scheduler-and-watcher.md | ✏️ | The scheduler actor (debounce, coalesce, one queue) stays, plus a **manual mode** that only counts changes (VS-D22). The watcher is replaced by file + git-HEAD events from the extension (VS-P9). |

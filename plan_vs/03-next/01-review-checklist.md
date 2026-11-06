@@ -13,6 +13,7 @@ without a click; narrower env-change trigger; one `.vnoc/` per git root; 90/30-d
 Recorded as **VS-D49 – VS-D57**.
 **Round 7** (2026-11-05): ULID-style encoding (R13); sharing = moving folders, `.gitignore` never changes; one node can have data on both sides; file IDs as a top comment. Recorded as **VS-D58 – VS-D60**. Then: docs on the canvas (doc panel), code editable everywhere with ⌘S / Ctrl+S, solo `.gitignore` = `*`: **VS-D61 – VS-D63**.
 **Round 8** (2026-11-05): save-hook facts (C8, C23), focus-stack keys via the core (B13), pylspt repo conditions (B14). Recorded as **VS-D64 – VS-D66**.
+**Round 9** (2026-11-06): S4 findings and your notes: Missing by where `node.toml` lives, the provisional tier (built, off in v1), observed moves (step 0), doc freshness. Recorded as **VS-D74 – VS-D77**, plus an amendment to VS-D73.
 
 What's left: answer each open row ✅ / ❌ / a change. Then the decision log moves 🟡 → ✅ and phase 2 starts.
 
@@ -76,12 +77,12 @@ What's left: answer each open row ✅ / ❌ / a change. Then the decision log mo
 | C6 | `#:schema` support in TOML extensions (Even Better TOML, Tombi) | FR-12, VS-D47. |
 | C7 | VS Code's MCP registration API; opencode / pi config | VS-O1. |
 | ~~C8~~ | ~~Save participant time budget~~ → **answered**: ~1.5 s shared by all listeners; edits dropped if the document changed; misbehaving listeners skipped → VS-D66 (precomputed edits) | FR-2B. |
-| C9 | `vscode.git` API: HEAD change events, "rebase/merge in progress", `git.enabled = false` | VS-D15, VS-P28. |
+| C9 | `vscode.git` API: HEAD change events, "rebase/merge in progress", `git.enabled = false`. The pause it feeds is **for speed only**: correctness doesn't depend on it (VS-D74). | VS-D15, VS-P28, VS-D74. |
 | C10 | Can save-time IDs work in **manual sync** mode? | VS-D22. **Answered by S3 + VS-D71:** yes. Planning needs only the one buffer; the "taken?" check is the registry + a disk check of the ID folders, no source search. |
 | C11 | macOS quarantine / Windows Defender on downloaded driver binaries | VS-D29. |
 | C12 | Lock crate (`fd-lock` / `fs4`) on all OSes and network homes; `dirs::data_local_dir` on Windows | VS-D29.4–5. |
 | C13 | HTTP client with proxy + rustls (`ureq` vs `reqwest`), and `http.noProxy` | VS-D29.6. |
-| C14 | `gix`: `is_ancestor` speed on a big history, with and without a commit-graph; **fails safely when history is missing** (shallow). ~~Reading a path from every local branch tip~~ dropped: VS-D72 replaces it with a ref check (is old HEAD still a branch tip?). | VS-D34, VS-D72. |
+| C14 | `gix`: the **three lookups** only: a path in HEAD's tree, the current branch, the local branch list. ~~`is_ancestor` speed, commit-graph, shallow behaviour, the ref check~~ dropped: VS-D74 has no ancestry test. | VS-D74. |
 | C15 | Opening a library file **read-only** | VS-D32. |
 | C16 | ~~Detecting "no system trash"~~ → **VS-D70: no system trash.** Now: moving files (and whole node folders) within `.vnoc/` on each OS, with open editors and Git watching them. Spike S3 checks macOS only. | VS-D70. |
 | C17 | Per-function parse-error detection from the driver | VS-D31. |
