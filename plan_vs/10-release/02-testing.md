@@ -8,7 +8,7 @@
 
 ## Will define
 
-1. **Rust unit tests:** pure logic, table-driven (ladder, placement, ancestry, ID derivation, `[[path]]` resolution).
+1. **Rust unit tests:** pure logic, table-driven (ladder, placement, the Missing / not-on-this-branch rule, ID derivation, `[[path]]` resolution).
 2. **Store tests** against the `GraphStore` trait, run on both the SQLite and the in-memory store.
 3. **Fixture repos:** the refactor suite from S4, the branch cases, a two-clone team setup (stable).
 4. **Driver tests:** the protocol against a fake core; the stdout guard.

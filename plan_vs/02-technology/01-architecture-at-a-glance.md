@@ -53,7 +53,7 @@ Four kinds of program, three message channels, one folder on disk (two sides), o
 ```
 host: activation ─► spawn core ─► initialize{root, storageUri, trusted, gitHead, proxy}
 core: read vnoc.toml + local.toml ─► find/copy driver (02-07) ─► open cache ─► scan scope ─► diff
-      ─► reconcile (head_moved? → "not on this branch" : Missing) ─► apply ─► notify graphChanged
+      ─► reconcile (absent nodes → Missing / "not on this branch", VS-D73) ─► apply ─► notify graphChanged
 host: refresh TreeView; open canvases re-request what they show
 ```
 
@@ -67,9 +67,8 @@ core: scheduler coalesces ─► small sync ─► graphChanged (+ missingChange
 **3. HEAD changes (checkout, pull, rebase…)**
 ```
 host: vscode.git repository.state.onDidChange ─► vnoc/headChanged   (just a nudge)
-core: reads HEAD with gix ─► is old HEAD an ancestor of the new one?
-        yes (pull, fast-forward, own commit) ─► absent documented nodes → MISSING (prompt)
-        no  (checkout, reset, rebase)        ─► absent documented nodes → "not on this branch" (no prompt)
+core: sync ─► absent documented nodes → MISSING (prompt) or "not on this branch" (no prompt),
+        decided by where each node's node.toml is, not by how HEAD moved (VS-D73, 02-05 §5)
 ```
 
 **4. Add a permanent ID to one function**

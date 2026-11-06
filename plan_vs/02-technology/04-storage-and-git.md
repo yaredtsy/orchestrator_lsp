@@ -223,7 +223,7 @@ The facts above were measured in spike S3 on **macOS only**.
 | `expansion_deps(fn_key, ctx_key, version, file_path, file_hash)`, `callers` | what each expansion depends on |
 | parsed `.vnoc` files, keyed by mtime | so startup doesn't re-read every `node.toml` |
 | `key_moves(old_key, new_key, at_sync)` | location-key renames seen by sync, so saved canvas tabs can translate their keys when restored (VS-D64). Chains are followed (`a → b → c`); rows older than `cache_days` are dropped |
-| `meta(last_synced_head, …)` | HEAD awareness (VS-D34) |
+| `last_seen(id, branch)` | the last branch each node was seen on, for floating nodes (VS-D73) |
 
 **Validation, not deletion:**
 
@@ -257,8 +257,8 @@ The facts above were measured in spike S3 on **macOS only**.
 | 5 | …and both **inject the ID** into the docstring | The **same `ID:` line** at the same spot → git merges identical changes cleanly. |
 | 5b | Attach on branch A, rename the function on branch B, attach again on B | Different inputs → two IDs → two folders. Sync sees a strong match → smaller ID wins, folders merged (§6). |
 | 6 | A rename on one branch, a doc added on another | In-code ID finds it; else the ladder (02-05 §4); else Missing → Find it… |
-| 7 | **Switching branches** (checkout, reset, rebase) | **Not Missing.** "Not on this branch", silently (VS-D34). |
-| 7b | **Pulling a teammate's deletion** | **Missing** (forward HEAD), unless their archive/remove of the shared `node.toml` came in the same pull. |
+| 7 | **Switching branches** | Docs that live on the other branch: **not Missing**, "Not on this branch", silently. Missing only if the checked-out commit itself orphans them (VS-D73). |
+| 7b | **Pulling a teammate's deletion** | **Missing** (the shared `node.toml` is still in HEAD's tree), unless their archive/remove of the shared `node.toml` came in the same pull. |
 | 8 | `vnoc.toml` edited on two branches | Normal TOML conflict. `local.toml` is never shared, so it never conflicts. |
 | 9 | A teammate renamed a documented function and their V-NOC wasn't running | Every teammate's sync updates the same `node.toml` the same way → identical uncommitted changes that merge cleanly, but they show in `git status` after the pull (R5). |
 

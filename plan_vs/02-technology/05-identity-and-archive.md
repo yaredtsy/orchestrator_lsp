@@ -38,8 +38,7 @@ id = base32( blake3( repo_relative_path + "::" + qualname + "#" + occurrence )[.
   `local/nodes/<shard>/<ID>/` (authoritative). If either finds it, step the counter (`path::qualname#1#2`, then `#3`, …) and hash again until it's free.
   **Source files are not searched.** Only a folder collision can mix user data, and check (2) always catches it. This covers a function deleted and later
   re-created under the same name: its old, archived docs keep the old ID.
-  - A **code-only duplicate** (the same `ID:` in two places, no folder involved) has no data attached and is repaired on the next sync: a copy matching
-    `node.toml`'s anchor keeps the ID; otherwise the copy whose current `path::qualname` hashes to the ID keeps it; the other copy gets a new ID.
+  - **Duplicate in-code IDs** (the same `ID:` in two places) are repaired on the next sync: §2, "Duplicate in-code IDs".
   - A **hash match on an archived folder** gives a new ID plus the prompt "An archived node used to be here: **Relink its docs?**"
 - **Derived once, then permanent.** It doesn't follow later renames; that's the point of a permanent ID.
 - **26 characters**, so sharding by the last 2 characters and everything else stays as it was.
@@ -110,8 +109,14 @@ class OrderService:
 | `no` | — | match by the ladder. If the mode later becomes `all`, inject and set `yes`. |
 | `never` | — | match by the ladder; **never inject**, whatever the mode or rule says. |
 
-**Duplicate in-code IDs** (copy-paste, cherry-pick): keep the ID on the copy that matches the cached node (on a fresh clone there's no cache, so the one that matches `node.toml`'s `path` + `qualname` as written, VS-D72).
-The other copy gets a new ID. If neither matches, ask (R9).
+**Duplicate in-code IDs** (copy-paste, cherry-pick) are repaired on the next sync (VS-D71). The first rule that applies picks the copy that keeps the ID:
+
+1. the copy matching `node.toml`'s anchor (`path` + `qualname`, as written);
+2. else the copy whose current `path::qualname` hashes to the ID;
+3. else, **if a node folder exists** (docs attached): **ask** (R9);
+4. else the copy that comes first by path, then by line. Never ask.
+
+The other copy gets a new ID.
 
 **Removing an ID: read tolerantly, remove exactly (VS-D43, VS-D49).**
 
@@ -198,25 +203,29 @@ Runs during sync for every permanent ID **not found in code**. That covers `no` 
 > ```
 > Stop at the first `One(..)`. A `Close(..)` becomes the "Find it…" list. Each step is a pure function, so each gets its own table-driven test.
 
-## 5. States, git events, archive (VS-D34, VS-D45, VS-D72)
+## 5. States, git events, archive (VS-D45, VS-D73)
 
 **The problem.** A documented node disappears. Was it deleted, so the user should decide what happens to the docs? Or is it just on another branch and will come back, so the
-user shouldn't be bothered? Timing can't tell, because `git checkout` and `git pull` both move HEAD. So we **test ancestry**:
+user shouldn't be bothered? Timing can't tell, because `git checkout` and `git pull` both move HEAD. So we don't ask how HEAD moved. We ask **where the node's `node.toml` is**:
 
 ```
-on each sync:
-    old = cache.last_synced_head        new = current HEAD          (Rust reads both with gix, VS-P28)
-
-    if old == new                                  → a WORKING-TREE change                    → MISSING
-    else if `old` is not in the repo any more      → can't tell (shallow clone, gc'd)          → NOT ON THIS BRANCH   [check] C14
-    else if is_ancestor(old, new)                  → history moved FORWARD (pull, ff, commit)  → MISSING
-    else if `old` is still a local branch tip      → a CHECKOUT (old work is on its branch)    → NOT ON THIS BRANCH
-    else                                           → history REWRITTEN (rebase, reset)         → MISSING
-
-    cache.last_synced_head = new   (same transaction)
+for each documented node still absent after the ladder:
+    if status = archived                                   → ARCHIVED (the Archived list)
+    else if its node.toml is committed in HEAD's tree      → MISSING   (its docs are orphaned in this commit; no history needed, works on shallow clones)
+    else  the node FLOATS (private, uncommitted shared, or private notes whose shared node.toml left with the branch):
+        no last_seen record (lost cache, only seen detached) → NOT ON THIS BRANCH
+        HEAD is on the last-seen branch                      → MISSING
+        the last-seen branch still exists                    → NOT ON THIS BRANCH
+        the last-seen branch was deleted                     → MISSING
 ```
 
+- **`last_seen(id, branch)`** (SQLite) is updated on every sync where the node is present **and** HEAD is on a branch. A **detached HEAD never updates it** and counts as a
+  different branch.
+- **Accepted edge:** a renamed branch looks deleted, so its floating nodes show as Missing. They come back when that branch is checked out.
+- **What Rust reads from git** (`gix`, VS-P28): a path lookup in HEAD's tree, the current branch, the list of local branches. No ancestry test and no history, so a shallow
+  clone needs no special case.
 - **Events:** `vscode.git` only *nudges* on a HEAD change. File events are **debounced (~200 ms) and processed as one batch**.
+- **Pause:** while a rebase, merge or cherry-pick is in progress, reconciling waits and runs once at the end (C9). That's for speed only; correctness doesn't depend on it.
 - **Startup scan:** compare `mtime` and `size` with the cache, and hash only the files that differ.
 - **No git repo:** every disappearance is Missing.
 
@@ -224,9 +233,10 @@ on each sync:
                        found again (any ladder step)
         ┌────────────────────────────────────────────────────────────────────┐
         ▼                                                                    │
-     ACTIVE ── gone after a checkout ───────► NOT ON THIS BRANCH (computed) ─┤  quiet list, no prompt
+     ACTIVE ── gone, floats, other branch ──► NOT ON THIS BRANCH (computed) ─┤  quiet list, no prompt
         │                                                                    │
-        └─── gone: edit, pull, rebase, reset ──► MISSING (computed) ─────────┘  badge + grouped notification
+        └─── gone, node.toml in HEAD's tree ───► MISSING (computed) ─────────┘  badge + grouped notification
+             (or floats, on/without its branch)
                                                   │      │      │
                                        [Archive]  │      │      │ [Remove] (confirm; V-NOC trash (VS-D70), 02-04 §7)
                                        ┌──────────┘      │      └─────────► REMOVED
@@ -244,7 +254,7 @@ on each sync:
 | any **shared** doc | **prompt** ("2 archived nodes expired. Remove?"), because removing them changes the repo |
 
 - Missing and not-on-this-branch are **computed per machine, never stored**. Both clear themselves when the code comes back.
-- **A teammate's deletion arrives by pull**: forward HEAD → Missing, so you're asked, unless their archive/remove came in the same pull.
+- **A teammate's deletion arrives by pull**: the shared `node.toml` is still in HEAD's tree → Missing, so you're asked, unless their archive/remove came in the same pull.
 - Archived nodes skip ladder steps 4–5. An in-code ID that reappears still brings one back.
 - **Relink** rewrites `path` / `qualname`. If the target already has its own permanent ID, that's two IDs on one node: **merge** (02-04 §6) or cancel.
 - **Never auto-delete orphans.**
@@ -260,7 +270,7 @@ Review → QuickPick:
    ⚠ helpers.py                  src/helpers.py · 1 doc          → [Find it…] [Archive] [Remove]
 ```
 
-One per sync, non-blocking. Dismissing is safe: the nodes stay Missing with a badge. The "IDs removed from code" notice (§2) is a separate grouped notice.
+One per sync, non-blocking. **Not shown while HEAD is detached**: the nodes are still listed as Missing, just without the notice (VS-D73). Dismissing is safe: the nodes stay Missing with a badge. The "IDs removed from code" notice (§2) is a separate grouped notice.
 
 ## 7. Writing IDs into source (VS-D16, VS-D31, VS-P24)
 
@@ -332,6 +342,6 @@ map(my_callback, items)                                 → `map` is an external
 | File events | debounced, one batch | only **counted**: `V-NOC: 12 changed · Sync` in the status bar |
 | Call trees | fresh | **still correct**: cached expansions are checked against their dependency hashes when read |
 | Falls behind until Sync | nothing | tree structure, new nodes, Missing detection, ID injection **[check] C10** |
-| HEAD changes | ancestry test at the next sync | the same |
+| HEAD changes | the absent-node rule (§5) at the next sync | the same |
 
 Next: [`06-distribution-and-integrations.md`](06-distribution-and-integrations.md)

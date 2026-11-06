@@ -9,7 +9,7 @@
 ## Will define
 
 1. **The scheduler:** event batching (~200 ms), auto vs manual, the startup mtime + size scan, one writer.
-2. **HEAD awareness:** reading HEAD with gix, the ancestry test, the ref check (is the old HEAD still a branch tip?, VS-D72), `last_synced_head`, rebase/merge in progress.
+2. **HEAD awareness (VS-D73):** the gix reads (a path in HEAD's tree, the current branch, the local branches), `last_seen(id, branch)`, detached HEAD, the pause while a rebase/merge is in progress (speed only).
 3. **The ladder:** the six steps as pure functions, the "before" state (cache, or `node.toml` anchors on a fresh clone: steps 1 and 6 only), the threshold from S4.
 4. **Node states:** Active / Not on this branch / Missing (computed) and Archived (stored), and every transition.
 5. **Two IDs on one node:** strong match → automatic merge (shared beats local, smaller ID wins); weak match → ask (stable).

@@ -26,7 +26,7 @@ User installs "V-NOC" (VS Code Marketplace, or Open VSX for Cursor / Windsurf / 
 ├── A. OPENS A FOLDER
 │   ├── A1. .vnoc/vnoc.toml exists ──► index on open (if configured) ──► C
 │   │     ├── untrusted workspace ──► read-only: index + browse; no code edits, no playground runs
-│   │     └── HEAD moved while VS Code was closed ──► same ancestry test as E4/E5
+│   │     └── HEAD moved while VS Code was closed ──► the same rule as E4/E5 (VS-D73)
 │   ├── A2. no .vnoc/ ──► stay quiet; the V-NOC view offers "Set up" / "Quick look"
 │   └── A3. a needed language driver is missing ──► "Install the X driver?" (always the user's choice)
 │
@@ -70,8 +70,8 @@ User installs "V-NOC" (VS Code Marketplace, or Open VSX for Cursor / Windsurf / 
 │   │        (manual + focus-out saves; not auto-save mid-typing; only functions without syntax errors)
 │   ├── E3. documented node found again (ID comment / path / hash / git rename / body hash) ──► silent
 │   │        └── ID comments deleted by hand ──► one notice: Restore / Keep removed
-│   ├── E4. checkout (old HEAD is still a branch tip) ──► gone nodes = "not on this branch", NO prompt
-│   └── E5. gone after an edit, a pull (HEAD moved forward), a rebase or a reset ──► "Missing" + one grouped notification
+│   ├── E4. branch switch: gone nodes whose docs live on another branch ──► "not on this branch", NO prompt (VS-D73)
+│   └── E5. gone, and its docs are orphaned in this commit (edit, pull, rebase…) ──► "Missing" + one grouped notification (VS-D73)
 │         ├── [Archive]  ──► soft-deleted in place, waits ──► [Relink to…] ──► active again (or expires after N days)
 │         ├── [Find it…] ──► pick the node it became
 │         └── [Remove]   ──► move it and its docs to .vnoc/local/trash/ (confirmed; restorable from "Recently removed"; V-NOC never empties it)
@@ -135,7 +135,7 @@ plan_vs/
 │   ├── 01-hello-core.md ............................. S1 extension + sidecar + webview + trust
 │   ├── 02-python-driver.md .......................... S2 driver process, pylspt adapter, timings
 │   ├── 03-edits-and-saving.md ....................... S3 WorkspaceEdit, save hook, V-NOC trash
-│   ├── 04-git-and-matching.md ....................... S4 ancestry, branch cases, the refactor suite
+│   ├── 04-git-and-matching.md ....................... S4 git lookups, branch cases, the refactor suite
 │   └── 05-canvas-editors.md ......................... S5 Monaco as document views, ⌘S, doc panel
 │                                                      2b: design docs, ONE FOLDER PER PROGRAM (the boxes in 02-01)
 ├── 06-core/ ......................................... the Rust core

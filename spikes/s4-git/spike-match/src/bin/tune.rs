@@ -92,6 +92,15 @@ enum D {
 }
 
 fn decide(p: &Prepared, cfg: &Config) -> D {
+    let d = decide_inner(p, cfg);
+    // EXPERIMENT (S4_TWIN_NEVER_SILENT=1): when the lost body has an identical twin anywhere, only ask, never match silently
+    if p.twin && std::env::var("S4_TWIN_NEVER_SILENT").map(|v| v == "1").unwrap_or(false) {
+        if let D::Silent(i) = d { return D::Ask(vec![i]); }
+    }
+    d
+}
+
+fn decide_inner(p: &Prepared, cfg: &Config) -> D {
     if let Some(i) = p.exact_unique.filter(|_| p.lost_tokens >= cfg.min_tokens) {
         return D::Silent(i);
     }
@@ -146,8 +155,7 @@ fn prepare_pair(lost: &Def, added: &[Def], successor: Option<&Def>, level: f32, 
     Prepared {
         level, place, lost_tokens: lost.tokens.len(),
         truth: successor.and_then(at),
-        // EXPERIMENT (env S4_TWIN_GUARD): step 4 may not fire when an unchanged function already has this exact body
-        exact_unique: if twin && std::env::var("S4_TWIN_GUARD").is_ok() { None } else { later.exact_unique.and_then(at) },
+        exact_unique: later.exact_unique.and_then(at),
         twin,
         scored: score_pool(lost, &later.pool, &later.mapped_file),
         lost_q: format!("{}::{}", lost.file, lost.qualname),

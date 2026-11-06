@@ -45,7 +45,7 @@ These drive the controls in [`05-user-controls-and-config.md`](05-user-controls-
 | Identity | Three ID modes (`none` / `on-attach` / `all`) as a project default plus per-folder `[[path]]` rules, changeable any time. **Per-node override**: add or remove (exact span only) a permanent ID on any file/class/function. IDs are derived by hash, and the driver places them (Python: a docstring `ID:` line for defs, a `# FileID:` comment at the top of a file). Folders never get one in code. Path + fallback matching when there's no ID. Missing → Archive → Relink flow. |
 | Setup | Quick look (nothing in the repo) · guided setup (scope, team or just me, may V-NOC edit code) · hand-written `vnoc.toml` / `local.toml` |
 | Sharing | `.vnoc/` (at the git root) has a **shared** side (committed in team mode) and a **local** side (never committed: private docs, overrides, cache). **Solo** mode creates only the local side and keeps all of `.vnoc/` out of git. |
-| Branches | Branch switches never prompt: nodes from another branch are "not on this branch", silently. |
+| Branches | Branch switches don't prompt for docs that live on another branch: those nodes are "not on this branch", silently (VS-D73). |
 | Trust | Restricted Mode = read-only indexing. |
 | Hosts | VS Code, plus forks that read Open VSX (Cursor, Windsurf, VSCodium) |
 

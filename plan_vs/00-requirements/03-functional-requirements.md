@@ -110,17 +110,17 @@ Grouped by area, with gaps left for inserts. ~~Struck~~ rows were dropped in rev
 
 | # | Requirement | P |
 |---|---|---|
-| FR-70 | A documented node lost by a **working-tree change**, or after HEAD moved **forward** (the new HEAD descends from the old), becomes **Missing** (badge), never silently deleted. | M |
-| FR-71 | One grouped, non-blocking notification per sync, **only for Missing**. | M |
+| FR-70 | A documented node absent after the ladder is **Missing** (badge), never silently deleted, when its `node.toml` is **committed in HEAD's tree**, or when it floats and HEAD is on its last-seen branch or that branch was deleted (VS-D73). | M |
+| FR-71 | One grouped, non-blocking notification per sync, **only for Missing**, and **not while HEAD is detached** (the nodes are still listed) (VS-D73). | M |
 | FR-72 | Missing and not-on-this-branch nodes return to Active on their own when the code reappears. | M |
 | FR-73 | Archive (soft delete), stored on the doc's side. | M |
 | FR-74 | Relink to another node from Missing / Not on this branch / Archived. | M |
 | FR-75 | Remove with a confirmation listing the files. **Every** Remove (private or shared, committed or not) moves the files to **`.vnoc/local/trash/<timestamp>_<node-id>/`** with a `trashed.toml` (`node`, `side`, `file`, `removed_at`), never the OS trash (VS-D70). That folder is **never auto-cleared** (VS-D52). | M |
 | FR-7A | A **"Recently removed"** list offers **Restore**, which moves the files back and never overwrites (a path that exists again is a reported conflict); if the node no longer exists it comes back as **Missing**. The trash's size is shown with an **"Empty V-NOC trash"** button, the only permanent delete, and it needs a click (VS-D70). | M |
 | FR-76 | Nodes without user data are never prompted for. | M |
-| FR-77 | **HEAD watch**: `vscode.git` notifies; Rust runs the **ancestry test** (`merge-base --is-ancestor old new`). Not a descendant → the ref check (FR-79) (VS-D34, VS-D72). | M |
-| FR-78 | The **last synced HEAD is stored in the cache**; a HEAD change made while VS Code was closed is handled the same way. | M |
-| FR-79 | **Ref check** when the new HEAD doesn't descend from the old one: if the **old HEAD is still the tip of a local branch** (checkout), nodes that disappear are **"not on this branch"**, with **no notification**; otherwise (rebase, reset) they're **Missing**. No history walk, no file reads (VS-D72). | M |
+| FR-77 | **HEAD watch**: `vscode.git` notifies; Rust reads only a path lookup in HEAD's tree, the current branch and the local branch list. No ancestry test, no history (VS-D73). | M |
+| FR-78 | The cache stores **`last_seen(id, branch)`**, updated on each sync where the node is present and HEAD is on a branch (never while detached). A HEAD change made while VS Code was closed is handled by the same rule. | M |
+| FR-79 | A **floating** node (its `node.toml` isn't committed in HEAD's tree) is **"not on this branch"**, with **no notification**, when it has no `last_seen` record or its last-seen branch still exists and isn't the current one. Otherwise it's Missing. A renamed branch looks deleted (accepted) (VS-D73). | M |
 
 ## 8x: Sharing / git
 

@@ -42,6 +42,34 @@
 
 ## Findings
 
-*(empty until S4 runs)*
+*In progress (2026-11-06). Done: the ladder, the six fixtures (+ 2 extra), VS-O10 on the labelled set. Not done yet: gix and the django timings (C14), C9 and the pause rule.
+Code: `spikes/s4-git/` (`spike-match`: `fixtures`, `tune`; `gen_labelled.py`). The S2 driver gained `vnoc/defs` (per-def fingerprints).*
+
+**Ladder fixtures (git CLI behind `GitBackend`; nine documented nodes; both scores behave the same here):**
+| Refactor | Result |
+|---|---|
+| rename a function | **step 4** (same body) |
+| move a file | **step 2** (same file hash) |
+| rename a folder | **step 2**, for functions, the file and the folder node (children's hashes) |
+| move AND edit a file | **step 3** (git rename detection, `-M`) |
+| move a function to another file | **step 4** |
+| rename a function AND rewrite its body | **asked** when the ask-floor is 0 (the right function is the top candidate, jaccard 0.03, edit 0.32); **Missing** at the default floor 0.5 |
+| delete a function whose sibling looks the same (extra) | **Missing**, not matched to the sibling (the sibling existed before, so it is no candidate) |
+| two identical methods, both renamed in one commit (extra, VS-D73) | **both ask**, the likelier candidate first, **nothing silent** |
+**No wrong silent match** in any fixture.
+
+**VS-O10 on the labelled set** (real functions from LightRAG `HEAD`, httpx, requests, flask; 120 per repo, each renamed and edited 0-70%, placed in the same scope / module level / another file, plus a deleted variant;
+~9,600 cases; tuned on LightRAG + httpx, validated on requests + flask; the silent rule needs score, margin, same file or class, and a minimum token count):
+- Zero wrong silent matches is reachable, but only at a very high bar: **Edit score >= 0.99, Jaccard >= 0.91** (24 and 212 of 1,440 grid points). **Held-out: 0 wrong silent matches for both.**
+- **There is a cliff, not a slope:** lowering the Edit threshold by 0.02 gives 186 wrong silent matches (train + held-out), by 0.05 gives 399.
+- **So in practice only an edit-free rename or move is matched silently** (Edit, same scope: 317 of 480 at 0% edit, 20 of 476 at 5%, ~0 above 10%). **Anything edited is asked.**
+- The right answer is usually offered first when asked: the true successor's mean Edit score is 0.91 at 5% edits and 0.62 at 35%, against 0.46 for the best wrong candidate.
+- **Edit is the better score for asking**: with Jaccard, about 1,300 of 4,900 training cases fall below the ask floor and show as Missing; with Edit, none do.
+- Names and parameters: name similarity of the true successor is flat at 0.64 (the generator renames every function), the parameter overlap falls with the edit level (1.00 to 0.04).
+- **Consequence for the default ID mode:** without in-code IDs, a function that is renamed **and** edited in one commit becomes a "Find it…" question. Nothing is lost, and the answer is nearly always first in the list.
+- **Twin cases** (the lost function has an identical twin in the corpus; 191 of 4,884 train cases, 388 of 4,711 held-out): under VS-D73 alone, **95 of 191 train twin cases and 51 of 388 held-out ones are silently wrong** (a new copy of the still-existing twin looks like the lost function's successor).
+  Experiment: if a lost body with an identical twin anywhere **only asks** (never silent), twin wrong goes to **0** and silent-right drops from 446 to 444 (Edit) / 530 to 526 (Jaccard). Not adopted yet: waiting for your decision.
+
+
 
 Next: [`05-canvas-editors.md`](05-canvas-editors.md)
