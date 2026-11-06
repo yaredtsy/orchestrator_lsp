@@ -70,9 +70,8 @@ User installs "V-NOC" (VS Code Marketplace, or Open VSX for Cursor / Windsurf / 
 │   │        (manual + focus-out saves; not auto-save mid-typing; only functions without syntax errors)
 │   ├── E3. documented node found again (ID comment / path / hash / git rename / body hash) ──► silent
 │   │        └── ID comments deleted by hand ──► one notice: Restore / Keep removed
-│   ├── E4. checkout / reset / rebase (HEAD jumped sideways) ──► gone nodes = "not on this branch", NO prompt
-│   │        └── opening that list: on no local branch tip at all ──► promoted to Missing
-│   └── E5. gone after an edit, or after a pull (HEAD moved forward) ──► "Missing" + one grouped notification
+│   ├── E4. checkout (old HEAD is still a branch tip) ──► gone nodes = "not on this branch", NO prompt
+│   └── E5. gone after an edit, a pull (HEAD moved forward), a rebase or a reset ──► "Missing" + one grouped notification
 │         ├── [Archive]  ──► soft-deleted in place, waits ──► [Relink to…] ──► active again (or expires after N days)
 │         ├── [Find it…] ──► pick the node it became
 │         └── [Remove]   ──► move it and its docs to .vnoc/local/trash/ (confirmed; restorable from "Recently removed"; V-NOC never empties it)

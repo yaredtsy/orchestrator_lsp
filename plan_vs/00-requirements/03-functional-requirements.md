@@ -118,9 +118,9 @@ Grouped by area, with gaps left for inserts. ~~Struck~~ rows were dropped in rev
 | FR-75 | Remove with a confirmation listing the files. **Every** Remove (private or shared, committed or not) moves the files to **`.vnoc/local/trash/<timestamp>_<node-id>/`** with a `trashed.toml` (`node`, `side`, `file`, `removed_at`), never the OS trash (VS-D70). That folder is **never auto-cleared** (VS-D52). | M |
 | FR-7A | A **"Recently removed"** list offers **Restore**, which moves the files back and never overwrites (a path that exists again is a reported conflict); if the node no longer exists it comes back as **Missing**. The trash's size is shown with an **"Empty V-NOC trash"** button, the only permanent delete, and it needs a click (VS-D70). | M |
 | FR-76 | Nodes without user data are never prompted for. | M |
-| FR-77 | **HEAD watch**: `vscode.git` notifies; Rust runs the **ancestry test** (`merge-base --is-ancestor old new`). Not a descendant (checkout, reset, rebase) → nodes that disappear are **"not on this branch"**, with **no notification** (VS-D34). | M |
+| FR-77 | **HEAD watch**: `vscode.git` notifies; Rust runs the **ancestry test** (`merge-base --is-ancestor old new`). Not a descendant → the ref check (FR-79) (VS-D34, VS-D72). | M |
 | FR-78 | The **last synced HEAD is stored in the cache**; a HEAD change made while VS Code was closed is handled the same way. | M |
-| FR-79 | Opening the "Not on this branch" list checks each node against all **local branch tips**; nodes found on none are **promoted to Missing**. | M |
+| FR-79 | **Ref check** when the new HEAD doesn't descend from the old one: if the **old HEAD is still the tip of a local branch** (checkout), nodes that disappear are **"not on this branch"**, with **no notification**; otherwise (rebase, reset) they're **Missing**. No history walk, no file reads (VS-D72). | M |
 
 ## 8x: Sharing / git
 
@@ -128,7 +128,7 @@ Grouped by area, with gaps left for inserts. ~~Struck~~ rows were dropped in rev
 |---|---|---|
 | FR-80 | User data is deterministic text, one item per file, in folders named by the node's ID, sharded by the last 2 characters (VS-D38). | M |
 | FR-81 | V-NOC writes `.vnoc/.gitignore` itself (FR-18). | M |
-| FR-82 | A fresh clone rebuilds the cache and re-attaches shared docs. | M |
+| FR-82 | A fresh clone rebuilds the cache and re-attaches shared docs. It uses `node.toml`'s anchors as written and runs ladder **steps 1 and 6 only** (no git history); stale anchors show **Missing with "Find it…"** (VS-D72). | M |
 | FR-83 | Two IDs resolving to one node: **strong match** → folders merged automatically (shared beats local; shared vs shared: smaller ID wins); **weak match** → ask; same-name file collision → `vscode.diff` (VS-D40). | M |
 | FR-85 | **One `node.toml` per node**: shared if the node has any shared doc, or `id_in_code = "never"` under a shared ID mode; otherwise local (VS-D39). | M |
 | FR-84 | The placement rules (VS-D24) are enforced in the Rust write path; the UI never chooses file paths. | M |

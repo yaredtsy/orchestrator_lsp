@@ -19,7 +19,7 @@
   },
   "precomputedSave": {
     "reason": "Manual",
-    "ms": 0.2,
+    "ms": 0.1,
     "used": true,
     "edits": 4
   },
@@ -39,10 +39,10 @@
       "defsGettingIds": 4,
       "plan_ms": {
         "p50": 0.7,
-        "p95": 1.3
+        "p95": 6.5
       },
-      "outline_ms_p50": 0.3,
-      "planIds_ms_p50": 0.4,
+      "outline_ms_p50": 0.2,
+      "planIds_ms_p50": 0.3,
       "driver_internal_ms_p50": 0.1,
       "hook_precomputed_ms": {
         "p50": 0.1,
@@ -50,10 +50,10 @@
       },
       "hook_atSave_ms": {
         "p50": 1,
-        "p95": 8.5
+        "p95": 1.1
       },
       "extra_hop_serialization_ms": 0,
-      "headroom_ms_if_computed_at_save": 1491.5
+      "headroom_ms_if_computed_at_save": 1498.9
     },
     {
       "size": "medium",
@@ -62,22 +62,22 @@
       "bytes": 34682,
       "defsGettingIds": 38,
       "plan_ms": {
-        "p50": 2.5,
-        "p95": 9.4
+        "p50": 2.7,
+        "p95": 11.6
       },
       "outline_ms_p50": 0.9,
-      "planIds_ms_p50": 1.6,
-      "driver_internal_ms_p50": 0.5,
+      "planIds_ms_p50": 1.8,
+      "driver_internal_ms_p50": 0.6,
       "hook_precomputed_ms": {
         "p50": 0.1,
-        "p95": 0.2
+        "p95": 0.3
       },
       "hook_atSave_ms": {
         "p50": 2.9,
-        "p95": 6.4
+        "p95": 8.3
       },
       "extra_hop_serialization_ms": 0.1,
-      "headroom_ms_if_computed_at_save": 1493.4
+      "headroom_ms_if_computed_at_save": 1491.5
     },
     {
       "size": "large",
@@ -87,32 +87,32 @@
       "defsGettingIds": 240,
       "plan_ms": {
         "p50": 10.6,
-        "p95": 33.3
+        "p95": 19.6
       },
-      "outline_ms_p50": 3.1,
-      "planIds_ms_p50": 7.4,
-      "driver_internal_ms_p50": 2.9,
+      "outline_ms_p50": 3.3,
+      "planIds_ms_p50": 7.2,
+      "driver_internal_ms_p50": 3,
       "hook_precomputed_ms": {
-        "p50": 0.2,
-        "p95": 0.4
+        "p50": 0.1,
+        "p95": 0.2
       },
       "hook_atSave_ms": {
-        "p50": 11.6,
-        "p95": 51
+        "p50": 16.9,
+        "p95": 48.6
       },
-      "extra_hop_serialization_ms": 0.6,
-      "headroom_ms_if_computed_at_save": 1447.9
+      "extra_hop_serialization_ms": 0.5,
+      "headroom_ms_if_computed_at_save": 1450.4
     }
   ],
   "slowHookWithBudget": [
     {
       "save": 1,
-      "saveMs": 813,
+      "saveMs": 815,
       "idsOnDisk": false
     },
     {
       "save": 2,
-      "saveMs": 814,
+      "saveMs": 815,
       "idsOnDisk": false
     },
     {
@@ -122,59 +122,59 @@
     },
     {
       "save": 4,
-      "saveMs": 813,
+      "saveMs": 815,
       "idsOnDisk": false
     },
     {
       "save": 5,
-      "saveMs": 817,
+      "saveMs": 821,
       "idsOnDisk": false
     },
     {
       "save": 6,
-      "saveMs": 813,
+      "saveMs": 814,
       "idsOnDisk": false
     },
     {
       "save": 7,
-      "saveMs": 819,
+      "saveMs": 815,
       "idsOnDisk": false
     },
     {
       "save": 8,
-      "saveMs": 813,
+      "saveMs": 811,
       "idsOnDisk": false
     }
   ],
   "slowHookNoBudget": [
     {
       "save": 1,
-      "saveMs": 1517,
+      "saveMs": 1528,
       "idsOnDisk": false
     },
     {
       "save": 2,
-      "saveMs": 1525,
+      "saveMs": 1515,
       "idsOnDisk": false
     },
     {
       "save": 3,
-      "saveMs": 1522,
+      "saveMs": 1520,
       "idsOnDisk": false
     },
     {
       "save": 4,
-      "saveMs": 1512,
+      "saveMs": 1540,
       "idsOnDisk": false
     },
     {
       "save": 5,
-      "saveMs": 12,
+      "saveMs": 9,
       "idsOnDisk": false
     },
     {
       "save": 6,
-      "saveMs": 8,
+      "saveMs": 52,
       "idsOnDisk": false
     }
   ],
@@ -216,19 +216,11 @@
     "textKept": true
   },
   "trashWatcherEvents": {
-    "count": 27,
+    "count": 19,
     "events": [
-      "c .vnoc",
-      "c nodes",
-      "c n1",
-      "c notes.md",
-      "c sub",
-      "c a.md",
-      "c ünï cøde 文 x.md",
-      "c .vnoc",
       "c local",
       "c trash",
-      "c 2026-11-05T20-00-58-988Z_n1",
+      "c 2026-11-05T20-27-32-978Z_n1",
       "c nodes",
       "c n1",
       "c notes.md",
@@ -247,5 +239,5 @@
       "d ünï cøde 文 x.md"
     ]
   },
-  "trashRemoveMs": 162.4
+  "trashRemoveMs": 482.9
 }

@@ -81,12 +81,12 @@ What's left: answer each open row ✅ / ❌ / a change. Then the decision log mo
 | C11 | macOS quarantine / Windows Defender on downloaded driver binaries | VS-D29. |
 | C12 | Lock crate (`fd-lock` / `fs4`) on all OSes and network homes; `dirs::data_local_dir` on Windows | VS-D29.4–5. |
 | C13 | HTTP client with proxy + rustls (`ureq` vs `reqwest`), and `http.noProxy` | VS-D29.6. |
-| C14 | `gix`: `is_ancestor` speed on big histories; reading a path from every local branch tip; shallow clones | VS-D34. |
+| C14 | `gix`: `is_ancestor` speed on a big history, with and without a commit-graph; **fails safely when history is missing** (shallow). ~~Reading a path from every local branch tip~~ dropped: VS-D72 replaces it with a ref check (is old HEAD still a branch tip?). | VS-D34, VS-D72. |
 | C15 | Opening a library file **read-only** | VS-D32. |
 | C16 | ~~Detecting "no system trash"~~ → **VS-D70: no system trash.** Now: moving files (and whole node folders) within `.vnoc/` on each OS, with open editors and Git watching them. Spike S3 checks macOS only. | VS-D70. |
 | C17 | Per-function parse-error detection from the driver | VS-D31. |
 | C18 | Watching `.vnoc/` when it sits **above** the opened folder (`RelativePattern` on the git root); does Workspace Trust cover it? | VS-D36. |
-| C19 | `gix`: "last commit that changed path X" + reading the file at that commit, speed on big repos, behaviour on shallow clones | VS-D44 fresh clone. |
+| ~~C19~~ | ~~`gix`: "last commit that changed path X" + reading the file at that commit~~ → **dropped, VS-D72**: a fresh clone uses `node.toml`'s anchors as written, then steps 1 and 6 only. | |
 | C20 | pylspt: the new `# FileID:` writer (after shebang / encoding / leading comment block); `plan_ids` fed with given IDs; reading returns each `ID:`'s **exact span + text**; the remove edit inside a user-written docstring leaves it valid (and removes a V-NOC-only `"""ID: x"""` whole) | VS-D49, VS-D54. |
 | C21 | Monaco inside a webview: CSP + web workers, bundle size, theme; the slice-edit version race (typing in the card and a regular editor at once) | VS-D57. |
 | C22 | Which `pyproject.toml` sections count as "dependencies" across tools (`[project]`, `[dependency-groups]`, `[tool.poetry]`, `[tool.uv]`), and which lockfiles | VS-D53. |
@@ -103,7 +103,7 @@ Most of it is solid and fits the earlier rounds. These are the points worth a se
 | R3 | **Restricted Mode must cover `local.toml` too.** It's ignored only by *our* `.gitignore`; a malicious repo can commit its own `.vnoc/local.toml` naming an "interpreter". | ✏️ 00-05: executable fields ignored in both files while untrusted. → **Round 6: VS-D51**, every repo file is untrusted. |
 | R4 | **"One `.vnoc/` per root" in multi-root** clashes with "at the git root" when two roots sit in the same repo. Also, when the opened folder is a sub-folder of the repo, `.vnoc/` is *outside* it (watching, trust). | ✏️ VS-P33 (they share one) + C18. → **Round 6: VS-D55**. |
 | R5 | **Keeping `path`/`qualname` current in committed `node.toml` creates `git status` noise.** If a teammate renames a documented function without V-NOC running, every other teammate's sync writes the same change after pulling. The changes are identical, so they merge cleanly. | ✏️ Collision case 9, and "only rewritten when a sync confirms a move, never for not-on-this-branch". Accepting the noise is the price of fresh-clone matching. |
-| R6 | **Fresh-clone "before" state needs the file content at an old commit**, because `node.toml` stores no hashes. This fails on shallow clones (CI, `--depth 1`). | ✏️ 02-05 §4: shallow → only steps 1 and 6; C19. |
+| R6 | *(Superseded by VS-D72: no history walk on a fresh clone.)* **Fresh-clone "before" state needs the file content at an old commit**, because `node.toml` stores no hashes. This fails on shallow clones (CI, `--depth 1`). | ✏️ 02-05 §4: shallow → only steps 1 and 6; C19. |
 | R7 | **"Clear everything when `pyproject.toml` or the venv changes"** means every dependency bump re-indexes the whole repo. | VS-P30: clear only resolution data. → **Round 6: VS-D53**, with a narrower trigger. |
 | R8 | **Where the ID comment goes isn't specified.** Decorators, shebang and encoding lines all matter. | VS-P32 + C20. → **Round 6: VS-D54**, the driver owns placement. |
 | R9 | **Duplicate IDs on a fresh clone:** "the copy that matches the cached node" has no cache to go by. | ✏️ Use `node.toml`'s path + qualname; if neither matches, ask. |

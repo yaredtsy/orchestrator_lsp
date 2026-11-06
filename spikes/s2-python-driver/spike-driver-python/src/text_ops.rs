@@ -49,6 +49,7 @@ pub fn handle(method: &str, text: &str, p: &Value) -> anyhow::Result<Value> {
     match method {
         "vnoc/outline" => outline(text),
         "vnoc/planIds" => plan(text, p),
+        "vnoc/defs" => defs_fingerprints(text),
         "vnoc/planFileId" => plan_file_id(text, p),
         "vnoc/planRemoveIds" => plan_remove(text, p),
         other => Err(anyhow!("`{other}` does not take `text`")),
@@ -272,4 +273,71 @@ fn plan_remove(text: &str, p: &Value) -> anyhow::Result<Value> {
         "edits": edits, "removed": ranges.iter().map(|r| r.2.clone()).collect::<Vec<_>>(), "mismatch": mismatch,
         "text_hash": blake3::hash(new_text.as_bytes()).to_hex().to_string(),
     }))
+}
+
+// ── S4: per-def fingerprints for the matching ladder ───────────────────────────────────────────
+// `vnoc/defs { text }` -> every def with its qualname, parameter names, and its BODY tokens with comments,
+// blank lines, newlines and indentation removed (so a function moved into a class, or reformatted, keeps the same tokens).
+
+use ruff_python_ast::Stmt;
+use ruff_python_ast::statement_visitor::{StatementVisitor, walk_body, walk_stmt};
+
+struct Collector<'a> {
+    text: &'a str,
+    index: &'a LineIndex,
+    toks: &'a [(usize, usize)], // (start, end) of every non-trivia token, in order
+    prefix: Vec<(String, &'static str)>,
+    out: Vec<Value>,
+}
+
+impl<'a> Collector<'a> {
+    fn record(&mut self, stmt: &Stmt, name: &str, kind: &'static str, params: Vec<String>, body: &'a [Stmt]) {
+        let range = stmt.range();
+        let body_start = body.first().map_or(range.end().to_usize(), |b| b.range().start().to_usize());
+        let lo = self.toks.partition_point(|t| t.0 < body_start);
+        let hi = self.toks.partition_point(|t| t.1 <= range.end().to_usize());
+        let tokens: Vec<&str> = self.toks[lo..hi.max(lo)].iter().map(|&(a, b)| &self.text[a..b]).collect();
+        let qualname = self.prefix.iter().map(|p| p.0.as_str()).chain(std::iter::once(name)).collect::<Vec<_>>().join(".");
+        let parent = self.prefix.iter().map(|p| p.0.as_str()).collect::<Vec<_>>().join(".");
+        let pos = to_position(self.index, self.text, range);
+        self.out.push(json!({
+            "qualname": qualname, "name": name, "kind": kind, "parent": parent,
+            "parent_kind": self.prefix.last().map(|p| p.1),
+            "line": pos.line, "end_line": pos.end_line, "params": params,
+            "body_hash": blake3::hash(tokens.join("\u{1f}").as_bytes()).to_hex().to_string(),
+            "tokens": tokens,
+        }));
+        self.prefix.push((name.to_string(), kind));
+        walk_body(self, body);
+        self.prefix.pop();
+    }
+}
+
+impl<'a> StatementVisitor<'a> for Collector<'a> {
+    fn visit_stmt(&mut self, stmt: &'a Stmt) {
+        match stmt {
+            Stmt::FunctionDef(f) => {
+                let mut ps: Vec<String> = f.parameters.iter_non_variadic_params().map(|p| p.parameter.name.to_string()).collect();
+                if let Some(v) = &f.parameters.vararg { ps.push(format!("*{}", v.name)); }
+                if let Some(k) = &f.parameters.kwarg { ps.push(format!("**{}", k.name)); }
+                self.record(stmt, f.name.as_str(), "function", ps, &f.body);
+            }
+            Stmt::ClassDef(c) => self.record(stmt, c.name.as_str(), "class", vec![], &c.body),
+            _ => walk_stmt(self, stmt),
+        }
+    }
+}
+
+fn defs_fingerprints(text: &str) -> anyhow::Result<Value> {
+    let parsed = parse(text);
+    let index = LineIndex::from_source_text(text);
+    let toks: Vec<(usize, usize)> = parsed
+        .tokens()
+        .iter()
+        .filter(|t| !matches!(format!("{:?}", t.kind()).as_str(), "Comment" | "NonLogicalNewline" | "Newline" | "Indent" | "Dedent" | "EndOfFile"))
+        .map(|t| (t.start().to_usize(), t.end().to_usize()))
+        .collect();
+    let mut c = Collector { text, index: &index, toks: &toks, prefix: vec![], out: vec![] };
+    walk_body(&mut c, &parsed.syntax().body);
+    Ok(json!({ "defs": c.out, "syntax_errors": parsed.errors().len() }))
 }

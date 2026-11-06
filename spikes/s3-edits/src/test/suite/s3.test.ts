@@ -298,7 +298,7 @@ const spanText = (doc: vscode.TextDocument, w: any) => doc.getText(new vscode.Ra
 
 suite("S3 steps 2-3 (C20): # FileID writer and exact-text remove", () => {
   const cases: [string, string, string][] = [
-    ["plain file", "import os\n\n\ndef f():\n    return 1\n", "# FileID: X\nimport os\n"],
+    ["plain file", "import os\n\n\ndef f():\n    return 1\n", "# FileID: X\nimport os\n\n\ndef f():\n    return 1\n"],
     ["shebang + encoding + license header", "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n# Copyright 2026 Acme\n# Licensed under MIT\nimport os\n", "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n# Copyright 2026 Acme\n# Licensed under MIT\n# FileID: X\nimport os\n"],
     ["encoding on line 1, module docstring next", "# coding: latin-1\n\"\"\"Module doc.\"\"\"\nimport os\n", "# coding: latin-1\n# FileID: X\n\"\"\"Module doc.\"\"\"\nimport os\n"],
     ["no trailing newline, only a comment", "# just a comment", "# just a comment\n# FileID: X\n"],

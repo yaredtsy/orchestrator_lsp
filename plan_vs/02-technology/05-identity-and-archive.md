@@ -110,7 +110,7 @@ class OrderService:
 | `no` | — | match by the ladder. If the mode later becomes `all`, inject and set `yes`. |
 | `never` | — | match by the ladder; **never inject**, whatever the mode or rule says. |
 
-**Duplicate in-code IDs** (copy-paste, cherry-pick): keep the ID on the copy that matches the cached node (on a fresh clone, the one that matches `node.toml`'s `path` + `qualname`).
+**Duplicate in-code IDs** (copy-paste, cherry-pick): keep the ID on the copy that matches the cached node (on a fresh clone there's no cache, so the one that matches `node.toml`'s `path` + `qualname` as written, VS-D72).
 The other copy gets a new ID. If neither matches, ask (R9).
 
 **Removing an ID: read tolerantly, remove exactly (VS-D43, VS-D49).**
@@ -186,8 +186,9 @@ Runs during sync for every permanent ID **not found in code**. That covers `no` 
 | 6 | No match | **Missing** (or "not on this branch", §5) |
 
 - VS Code's `onDidRenameFiles` events tell steps 2–3 the answer up front, without searching.
-- **The "before" state** (last known paths, hashes, fingerprints) comes from SQLite. **On a fresh clone** there's no cache, so it comes from git: the version of the file at
-  **the last commit that changed that node's `node.toml`** (that's when `path` was last confirmed). Shallow clones may not have that commit, in which case only steps 1 and 6 run **[check] C19**.
+- **The "before" state** (last known paths, hashes, fingerprints) comes from SQLite. **On a fresh clone** (shallow or not) there's no cache, so V-NOC uses `node.toml`'s
+  anchors (`path`, `qualname`) **as written** and runs **steps 1 and 6 only**. No git history is read (VS-D72). Anchors that went stale (renamed without V-NOC) show as
+  **Missing with "Find it…"** until the next V-NOC user who has a cache fixes them.
 
 > **🦀 Rust note: modelling the ladder.** Every step has the same shape, so a slice of function pointers is enough:
 > ```rust
@@ -197,7 +198,7 @@ Runs during sync for every permanent ID **not found in code**. That covers `no` 
 > ```
 > Stop at the first `One(..)`. A `Close(..)` becomes the "Find it…" list. Each step is a pure function, so each gets its own table-driven test.
 
-## 5. States, git events, archive (VS-D34, VS-D45)
+## 5. States, git events, archive (VS-D34, VS-D45, VS-D72)
 
 **The problem.** A documented node disappears. Was it deleted, so the user should decide what happens to the docs? Or is it just on another branch and will come back, so the
 user shouldn't be bothered? Timing can't tell, because `git checkout` and `git pull` both move HEAD. So we **test ancestry**:
@@ -207,14 +208,14 @@ on each sync:
     old = cache.last_synced_head        new = current HEAD          (Rust reads both with gix, VS-P28)
 
     if old == new                                  → a WORKING-TREE change                    → MISSING
-    else if `old` is not in the repo any more      → can't tell (shallow clone, gc'd)          → NOT ON THIS BRANCH (the tip check catches real deletions)
+    else if `old` is not in the repo any more      → can't tell (shallow clone, gc'd)          → NOT ON THIS BRANCH   [check] C14
     else if is_ancestor(old, new)                  → history moved FORWARD (pull, ff, commit)  → MISSING
-    else                                           → history JUMPED SIDEWAYS (checkout, reset, rebase) → NOT ON THIS BRANCH
+    else if `old` is still a local branch tip      → a CHECKOUT (old work is on its branch)    → NOT ON THIS BRANCH
+    else                                           → history REWRITTEN (rebase, reset)         → MISSING
 
     cache.last_synced_head = new   (same transaction)
 ```
 
-- **Rebase caveat:** when the user opens the "Not on this branch" list, a node found on **no local branch tip** is **promoted to Missing**.
 - **Events:** `vscode.git` only *nudges* on a HEAD change. File events are **debounced (~200 ms) and processed as one batch**.
 - **Startup scan:** compare `mtime` and `size` with the cache, and hash only the files that differ.
 - **No git repo:** every disappearance is Missing.
@@ -223,10 +224,9 @@ on each sync:
                        found again (any ladder step)
         ┌────────────────────────────────────────────────────────────────────┐
         ▼                                                                    │
-     ACTIVE ── gone, HEAD jumped sideways ──► NOT ON THIS BRANCH (computed) ─┤  quiet list, no prompt
-        │                                         │ list opened & on no local branch tip
-        │                                         ▼                          │
-        └──── gone, same HEAD / HEAD forward ──► MISSING (computed) ─────────┘  badge + grouped notification
+     ACTIVE ── gone after a checkout ───────► NOT ON THIS BRANCH (computed) ─┤  quiet list, no prompt
+        │                                                                    │
+        └─── gone: edit, pull, rebase, reset ──► MISSING (computed) ─────────┘  badge + grouped notification
                                                   │      │      │
                                        [Archive]  │      │      │ [Remove] (confirm; V-NOC trash (VS-D70), 02-04 §7)
                                        ┌──────────┘      │      └─────────► REMOVED

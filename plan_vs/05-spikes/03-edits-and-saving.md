@@ -42,7 +42,7 @@ MVP note: in-code IDs ship in **stable** (M7), but the risky VS Code behaviour i
 ## Findings
 
 *Run 2026-11-05 on macOS, VS Code 1.145, in a real extension host driven by an automated suite (`spikes/s3-edits/`, `npm test`; throwaway profile).
-25 of 26 tests pass; the one failure is a wrong expected string in my test (see "Open" at the end), not a product problem.*
+all 26 tests pass.*
 
 **Spike-only shortcut (marked in the code):** the extension spawns the S2 driver itself. In the product the **core owns drivers; the extension never spawns one.**
 The wire shape is the real one: `vnoc/planIds { text, version, ids: [{line, column, id}] }` -> `{ version, edits: TextEdit[], written: [{id, span, text}], skipped, unmatched, text_hash }`.
@@ -117,8 +117,7 @@ Result: B8 holds, with two additions: **moves are not direct writes**, and `tras
 2. `lsp-server` requires the `initialized` notification before any request.
 
 **Open:**
-1. **`FileID: plain file` test:** my expected string was cut short; the driver's output is right. One-line fix in the test, waiting for your go-ahead.
-2. Not exercised: save reasons `AfterDelay` and `FocusOut`; non-macOS; remote.
+1. Not exercised: save reasons `AfterDelay` and `FocusOut`; non-macOS; remote.
 
 
 Next: [`04-git-and-matching.md`](04-git-and-matching.md)
