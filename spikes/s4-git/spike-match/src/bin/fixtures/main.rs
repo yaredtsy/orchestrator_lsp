@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 use spike_match::cli;
 use spike_match::driver::Driver;
 use spike_match::git::{CliGit, GitBackend};
-use spike_match::ladder::{Config, Main, Outcome, locate, matching};
+use spike_match::ladder::{Config, Main, Outcome, Steps, locate, matching};
 use spike_match::model::Node;
 use spike_match::snapshot::snapshot;
 
@@ -78,17 +78,17 @@ fn main() -> anyhow::Result<()> {
     let before_c = g.rev_parse("base")?;
     let before = snapshot(&g, &mut driver, &before_c)?;
 
-    let scores = if cli::value("score").is_some() { vec![cli::apply(Config::default()).score] } else { vec![Main::Edit, Main::Jaccard] };
+    let scores = if cli::value("score").is_some() { vec![cli::apply(Config::default().with_steps(Steps::all())).score] } else { vec![Main::Edit, Main::Jaccard] };
     for score in scores {
-        let cfg = cli::apply(Config::default().with_score(score));
-        println!("\n## ladder, score = {score:?}, silent {:?}, provisional {:?}, ask {:?}\n", cfg.silent, cfg.provisional, cfg.ask);
+        let cfg = cli::apply(Config::default().with_steps(Steps::all()).with_score(score));
+        println!("\n## ladder, steps {:?}, score = {score:?}, silent {:?}, provisional {:?}, ask {:?}\n", cfg.steps, cfg.silent, cfg.provisional, cfg.ask);
         println!("| fixture | node | result | verdict |\n|---|---|---|---|");
         let mut t = Tally::default();
         for case in &cases {
             let after_c = g.rev_parse(case.branch)?;
             let after = snapshot(&g, &mut driver, &after_c)?;
             let renames = g.renames(&before_c, &after_c)?;
-            let m = matching(&before, &after, &renames);
+            let m = matching(&before, &after, &renames, &cfg.steps);
             for (node, want) in nodes.iter().zip(case.truth(&nodes)) {
                 let out = locate(node, &before, &after, &renames, &m, &cfg);
                 let verdict = judge(&out, &want, &mut t);

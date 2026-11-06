@@ -3,13 +3,17 @@
 use crate::git::Rename;
 use crate::model::{FileSnap, Node, Snapshot};
 
+use super::config::Steps;
 use super::outcome::Outcome;
 
-pub fn locate_file(path: &str, before: &Snapshot, after: &Snapshot, renames: &[Rename]) -> Outcome {
+pub fn locate_file(path: &str, before: &Snapshot, after: &Snapshot, renames: &[Rename], steps: &Steps) -> Outcome {
     if after.files.contains_key(path) {
         return Outcome::Found { step: 1, node: Node::File { path: path.into() } };
     }
     let Some(old) = before.files.get(path) else { return Outcome::Missing };
+    if !steps.file_moves {
+        return Outcome::Missing;
+    }
     if let Some((p, _)) = after.files.iter().find(|(p, f)| f.content_hash == old.content_hash && !before.files.contains_key(*p)) {
         return Outcome::Found { step: 2, node: Node::File { path: p.clone() } };
     }
@@ -19,7 +23,7 @@ pub fn locate_file(path: &str, before: &Snapshot, after: &Snapshot, renames: &[R
     Outcome::Missing
 }
 
-pub fn locate_folder(prefix: &str, before: &Snapshot, after: &Snapshot, renames: &[Rename]) -> Outcome {
+pub fn locate_folder(prefix: &str, before: &Snapshot, after: &Snapshot, renames: &[Rename], steps: &Steps) -> Outcome {
     let dir = format!("{}/", prefix.trim_end_matches('/'));
     let kids: Vec<(&String, &FileSnap)> = before.files.iter().filter(|(p, _)| p.starts_with(&dir)).collect();
     if kids.is_empty() {
@@ -27,6 +31,9 @@ pub fn locate_folder(prefix: &str, before: &Snapshot, after: &Snapshot, renames:
     }
     if after.files.keys().any(|p| p.starts_with(&dir)) {
         return Outcome::Found { step: 1, node: Node::Folder { path: prefix.into() } };
+    }
+    if !steps.file_moves {
+        return Outcome::Missing;
     }
     // step 2: a folder matches by its children's hashes. Try the prefix implied by the first child.
     let (p0, f0) = kids[0];

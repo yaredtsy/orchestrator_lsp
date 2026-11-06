@@ -46,8 +46,31 @@ pub struct AskRules {
     pub floor: f32,
 }
 
+/// Which ladder steps run. Step 1 (same `path::qualname`) always runs. The MVP uses step 1 only; the others are built and
+/// tested but off until the features that need them ship (no-ID mode, step 0 and the matching steps come together).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Steps {
+    /// steps 2 and 3: the file moved (same content hash, or git's rename detection)
+    pub file_moves: bool,
+    /// step 4: the same body under another name or in another file
+    pub body_hash: bool,
+    /// step 5: similarity, with context (and the provisional tier, which is a tier of step 5)
+    pub similarity: bool,
+}
+
+impl Steps {
+    /// The MVP: step 1 only.
+    pub const fn mvp() -> Self {
+        Steps { file_moves: false, body_hash: false, similarity: false }
+    }
+    pub const fn all() -> Self {
+        Steps { file_moves: true, body_hash: true, similarity: true }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Config {
+    pub steps: Steps,
     pub score: Main,
     pub silent: SilentRule,
     /// `None` = the tier is off (silent or ask, as before)
@@ -59,6 +82,7 @@ impl Default for Config {
     /// Starting values, not tuned values: the tuned ones come from `tune` (spike S4).
     fn default() -> Self {
         Config {
+            steps: Steps::mvp(),
             score: Main::Edit,
             silent: SilentRule { threshold: 0.80, margin: 0.10 },
             provisional: None,
@@ -68,6 +92,10 @@ impl Default for Config {
 }
 
 impl Config {
+    pub fn with_steps(mut self, steps: Steps) -> Self {
+        self.steps = steps;
+        self
+    }
     pub fn with_score(mut self, score: Main) -> Self {
         self.score = score;
         self

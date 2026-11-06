@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use crate::git::Rename;
 use crate::model::{Def, Node, Snapshot};
 
-use super::config::Config;
+use super::config::{Config, Steps};
 use super::matching::{Matching, find};
 use super::outcome::{Cand, Outcome};
 use super::policy::{Facts, Verdict, resolve};
@@ -37,7 +37,7 @@ pub enum Stage<'a> {
 }
 
 /// Steps 1-3 for a function, then the inputs for steps 4-5.
-pub fn stage_function<'a>(path: &str, qualname: &str, before: &'a Snapshot, after: &'a Snapshot, renames: &[Rename], m: &Matching) -> Stage<'a> {
+pub fn stage_function<'a>(path: &str, qualname: &str, before: &'a Snapshot, after: &'a Snapshot, renames: &[Rename], m: &Matching, steps: &Steps) -> Stage<'a> {
     let found = |step, p: &str| Stage::Found { step, node: Node::Function { path: p.into(), qualname: qualname.into() } };
     // 1: same path and name
     if find(after, path, qualname).is_some() {
@@ -48,7 +48,7 @@ pub fn stage_function<'a>(path: &str, qualname: &str, before: &'a Snapshot, afte
 
     // 2: the whole file moved with identical content (also covers folder renames)
     let mut mapped_file = path.to_string();
-    for (p, f) in &after.files {
+    for (p, f) in after.files.iter().filter(|_| steps.file_moves) {
         if p != path && f.content_hash == old_file.content_hash && !before.files.contains_key(p) {
             mapped_file = p.clone();
             if find(after, p, qualname).is_some() {
@@ -57,7 +57,7 @@ pub fn stage_function<'a>(path: &str, qualname: &str, before: &'a Snapshot, afte
         }
     }
     // 3: git rename detection (the file moved AND was edited)
-    if let Some(r) = renames.iter().find(|r| r.old == path) {
+    if let Some(r) = renames.iter().filter(|_| steps.file_moves).find(|r| r.old == path) {
         mapped_file = r.new.clone();
         if find(after, &r.new, qualname).is_some() {
             return found(3, &r.new);
@@ -95,7 +95,7 @@ pub fn finish(stage: &Stage, cfg: &Config) -> Outcome {
     let (verdict, scored) = match super::policy::step4(l.exact_unique, &facts, cfg) {
         Some(v) => (v, Vec::new()),
         None => {
-            let scored = score_pool(l.old, &l.pool, &l.mapped_file);
+            let scored = if cfg.steps.similarity { score_pool(l.old, &l.pool, &l.mapped_file) } else { Vec::new() };
             (resolve(None, &scored, &facts, cfg), scored)
         }
     };
@@ -127,8 +127,8 @@ mod tests {
     const OTHER: &str = "return a + b";
 
     fn twin_of(before: &Snapshot, after: &Snapshot) -> bool {
-        let m = matching(before, after, &[]);
-        match stage_function("a.py", "C.gross", before, after, &[], &m) {
+        let m = matching(before, after, &[], &Steps::all());
+        match stage_function("a.py", "C.gross", before, after, &[], &m, &Steps::all()) {
             Stage::Later(l) => l.has_twin,
             _ => panic!("expected the function to be left for steps 4-5"),
         }

@@ -9,7 +9,7 @@ use std::collections::HashSet;
 
 use spike_match::driver::Driver;
 use spike_match::git::CliGit;
-use spike_match::ladder::{Facts, Scored, Stage, matching, score_pool, stage_function};
+use spike_match::ladder::{Facts, Scored, Stage, Steps, matching, score_pool, stage_function};
 use spike_match::model::{Def, FileSnap, Snapshot};
 use spike_match::similarity::{Fp, jaccard};
 
@@ -71,8 +71,9 @@ pub fn prepare_pair(lost: &Def, twins: &[&Def], added: &[Def], successor: Option
     for d in added {
         add_to(&mut after, "after", d);
     }
-    let m = matching(&before, &after, &[]);
-    let Stage::Later(later) = stage_function(&lost.file, &lost.qualname, &before, &after, &[], &m) else {
+    let steps = Steps::all(); // the tuning measures steps 4-5, so they are on here
+    let m = matching(&before, &after, &[], &steps);
+    let Stage::Later(later) = stage_function(&lost.file, &lost.qualname, &before, &after, &[], &m, &steps) else {
         unreachable!("a lost function never matches at steps 1-3 here")
     };
     let at = |d: &Def| later.pool.iter().position(|x| x.file == d.file && x.qualname == d.qualname);

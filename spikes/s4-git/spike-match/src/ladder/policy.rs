@@ -48,6 +48,9 @@ pub fn ask_only_reasons(facts: &Facts, cfg: &Config) -> Vec<AskReason> {
 /// Step 4: the same body, unique among unmatched old and unmatched new functions (the caller computed that).
 /// `None` = step 4 does not decide; go on to step 5.
 pub fn step4(exact_unique: Option<usize>, facts: &Facts, cfg: &Config) -> Option<Verdict> {
+    if !cfg.steps.body_hash {
+        return None;
+    }
     let pool = exact_unique?;
     ask_only_reasons(facts, cfg).is_empty().then_some(Verdict::Silent { pool, step: 4 })
 }
@@ -62,6 +65,9 @@ fn is_provisional(lead: &Lead, cfg: &Config) -> bool {
 
 /// Step 5: similarity, with context.
 pub fn step5(scored: &[Scored], facts: &Facts, cfg: &Config) -> Verdict {
+    if !cfg.steps.similarity {
+        return Verdict::Nothing;
+    }
     let Some(lead) = lead(scored, cfg.score) else { return Verdict::Nothing };
     let mut reasons = ask_only_reasons(facts, cfg);
     if reasons.is_empty() {
@@ -93,7 +99,7 @@ pub fn resolve(exact_unique: Option<usize>, scored: &[Scored], facts: &Facts, cf
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ladder::config::Config;
+    use crate::ladder::config::{Config, Steps};
     use crate::similarity::Features;
 
     /// (pool index, edit score, same_file); jaccard = edit, name 0.5
@@ -105,7 +111,7 @@ mod tests {
     const OK: Facts = Facts { lost_tokens: 100, has_twin: false };
 
     fn cfg() -> Config {
-        Config::default().with_silent(0.95, 0.10).with_provisional(0.70, 0.10).with_ask(20, true, 0.40)
+        Config::default().with_steps(Steps::all()).with_silent(0.95, 0.10).with_provisional(0.70, 0.10).with_ask(20, true, 0.40)
     }
 
     #[test]
@@ -128,6 +134,23 @@ mod tests {
         for (name, s, f, want) in cases {
             assert_eq!(resolve(None, &s, &f, &c), want, "{name}");
         }
+    }
+
+    #[test]
+    fn the_mvp_runs_no_matching_step_beyond_step_1() {
+        // with the MVP steps, neither an exact body match (step 4) nor a similar candidate (step 5) is used
+        let c = cfg().with_steps(Steps::mvp());
+        let s = scored(&[(7, 1.0, true), (8, 0.2, true)]);
+        assert_eq!(resolve(Some(7), &s, &OK, &c), Verdict::Nothing);
+        assert_eq!(resolve(None, &s, &OK, &c), Verdict::Nothing);
+    }
+
+    #[test]
+    fn steps_can_be_switched_on_one_by_one() {
+        let only_body = cfg().with_steps(Steps { file_moves: false, body_hash: true, similarity: false });
+        let s = scored(&[(7, 0.98, true), (8, 0.2, true)]);
+        assert_eq!(resolve(Some(7), &s, &OK, &only_body), Verdict::Silent { pool: 7, step: 4 });
+        assert_eq!(resolve(None, &s, &OK, &only_body), Verdict::Nothing, "step 5 stays off");
     }
 
     #[test]

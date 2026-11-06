@@ -1,8 +1,8 @@
 //! Flags shared by the binaries, so a ladder setting is always spelled the same way:
-//!   --score=edit|jaccard   --silent=THRESHOLD,MARGIN   --provisional=FLOOR,MARGIN   --ask=MIN_TOKENS,on|off,FLOOR
+//!   --steps=mvp|all|files,body,similarity   --score=edit|jaccard   --silent=THRESHOLD,MARGIN   --provisional=FLOOR,MARGIN   --ask=MIN_TOKENS,on|off,FLOOR
 //! (`--ask`'s `on|off` is the twin rule.)
 
-use crate::ladder::{Config, Main};
+use crate::ladder::{Config, Main, Steps};
 
 /// The value of `--name=value`, if given.
 pub fn value(name: &str) -> Option<String> {
@@ -16,6 +16,13 @@ fn nums(v: &str) -> Vec<f32> {
 
 /// Applies whatever flags were given on top of `base`.
 pub fn apply(mut cfg: Config) -> Config {
+    if let Some(v) = value("steps") {
+        cfg.steps = match v.as_str() {
+            "mvp" => Steps::mvp(),
+            "all" => Steps::all(),
+            list => Steps { file_moves: list.contains("files"), body_hash: list.contains("body"), similarity: list.contains("similarity") },
+        };
+    }
     if let Some(v) = value("score") {
         cfg.score = if v == "jaccard" { Main::Jaccard } else { Main::Edit };
     }

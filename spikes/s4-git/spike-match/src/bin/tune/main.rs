@@ -19,7 +19,7 @@ use std::path::PathBuf;
 
 use spike_match::cli;
 use spike_match::driver::Driver;
-use spike_match::ladder::{Config, Main, Verdict};
+use spike_match::ladder::{Config, Main, Steps, Verdict};
 
 use counts::{Counts, classify, decide, run};
 use dataset::Repo;
@@ -33,7 +33,7 @@ fn main() -> anyhow::Result<()> {
     let mut driver = Driver::start(&root.join("../s2-python-driver/spike-driver-python/target/release/spike-driver-python"))?;
 
     // The base config: only the ask rules (twin rule, ask floor) come from here; the grid chooses the rest.
-    let base = cli::apply(Config::default().with_ask(20, true, 0.30));
+    let base = cli::apply(Config::default().with_steps(Steps::all()).with_ask(20, true, 0.30));
     let min_accuracy: f32 = cli::value("provisional-accuracy").and_then(|v| v.parse().ok()).unwrap_or(0.95);
 
     let repo = |name: &'static str, path: PathBuf| Repo { name, path };

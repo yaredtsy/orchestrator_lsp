@@ -78,9 +78,9 @@ fn lookups_agree_in_a_normal_repo() {
 #[test]
 fn a_branch_name_with_a_slash() {
     let d = repo();
-    assert!(git(&d, &["checkout", "-q", "-b", "feature/x"]));
-    assert_eq!(both(&d, "branch", |g| g.current_branch().unwrap()), Some("feature/x".to_string()));
-    assert_eq!(both(&d, "branches", |g| g.local_branches().unwrap()), vec!["feature", "feature/x", "main"]);
+    assert!(git(&d, &["checkout", "-q", "-b", "topic/x"]));
+    assert_eq!(both(&d, "branch", |g| g.current_branch().unwrap()), Some("topic/x".to_string()));
+    assert_eq!(both(&d, "branches", |g| g.local_branches().unwrap()), vec!["feature", "main", "topic/x"]);
 }
 
 #[test]
