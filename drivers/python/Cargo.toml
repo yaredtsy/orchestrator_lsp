@@ -1,0 +1,37 @@
+[package]
+name = "vnoc-driver-python"
+version = "0.1.0"
+edition = "2024"
+description = "The Python language driver: a thin adapter between the V-NOC driver protocol (plan_vs/07-drivers/01) and pylspt."
+
+# Its own workspace: its own rust-toolchain.toml (pylspt pins 1.98.0) and its own Cargo.lock (ruff only compiles against the
+# salsa version pylspt is locked to; this lockfile started as a copy of the spike's, which started as pylspt's).
+[workspace]
+
+[dependencies]
+anyhow = "1"
+lsp-server = "0.10"
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# TODO(M1): pylspt by git `rev` with a gitignored `[patch]` for local work (02-07 §1), once pylspt is pushed.
+pylspt = { path = "../../../pylspt" }
+# TODO(M1): drop these three when pylspt has a facade (S2 finding: it re-exports nothing, so the adapter names ruff crates).
+ruff_python_parser = { path = "../../../pylspt/vendor/ruff/crates/ruff_python_parser" }
+ruff_python_ast = { path = "../../../pylspt/vendor/ruff/crates/ruff_python_ast" }
+ruff_text_size = { path = "../../../pylspt/vendor/ruff/crates/ruff_text_size" }
+
+[dev-dependencies]
+# Tests check the driver against the domain's golden IDs. The driver itself never depends on the domain (the core picks IDs).
+vnoc-domain = { path = "../../crates/vnoc-domain" }
+
+# Dependencies (ruff, ty, salsa) at opt-level 2 even in dev: unoptimised ruff is too slow to test against. Release is for packaging.
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+strip = true
+lto = "fat"
+codegen-units = 1
+panic = "abort"

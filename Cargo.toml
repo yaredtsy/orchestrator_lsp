@@ -4,3 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+
+# The monorepo (plan_vs 02-07): the core crates live in crates/. The spikes are throwaway and stay outside the workspace,
+# and drivers/python is its own workspace (it pins its own toolchain for pylspt/ruff).
+[workspace]
+members = ["crates/*"]
+exclude = ["spikes", "drivers", "plan", "plan_vs"]
+resolver = "3"
