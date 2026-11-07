@@ -1,0 +1,40 @@
+{
+  "name": "vnoc",
+  "displayName": "V-NOC",
+  "description": "Browse code as a graph and attach docs to it (walking skeleton).",
+  "version": "0.0.1",
+  "publisher": "vnoc",
+  "engines": { "vscode": "^1.90.0" },
+  "main": "./out/extension.js",
+  "activationEvents": ["onWebviewPanel:vnoc.canvas"],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In Restricted Mode V-NOC ignores the executable paths set in workspace settings.",
+      "restrictedConfigurations": ["vnoc.server.path", "vnoc.driver.path"]
+    }
+  },
+  "contributes": {
+    "commands": [{ "command": "vnoc.openCanvas", "title": "V-NOC: Open canvas" }],
+    "configuration": {
+      "title": "V-NOC",
+      "properties": {
+        "vnoc.server.path": { "type": "string", "default": "", "description": "Path to the vnoc core binary. Empty = the build folder of this repository (development). Ignored from workspace settings in Restricted Mode." },
+        "vnoc.driver.path": { "type": "string", "default": "", "description": "Path to the Python driver binary. Empty = the build folder of this repository (development). Ignored from workspace settings in Restricted Mode." }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "test": "tsc -p . && node out/test/runTest.js"
+  },
+  "dependencies": { "vscode-languageclient": "^9.0.1" },
+  "devDependencies": {
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/test-electron": "^2.4.0",
+    "mocha": "^10.0.0",
+    "typescript": "^5.6.0"
+  }
+}

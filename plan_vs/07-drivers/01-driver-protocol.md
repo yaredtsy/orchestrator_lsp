@@ -61,7 +61,7 @@ core                                   driver
 ```
 - `defs` are **flat, in source order, parents before children**. The core counts the `occurrence` of each qualname itself (`vnoc-domain`: one rule, one place).
 - **`qualname` is the language's own name, opaque to the core.** For Python it is `__qualname__` **including `<locals>`** (`top.<locals>.inner`).
-- **`id`** is the text of the ID the driver **read in the code** (or `null`), **as written**: the core parses it with `NodeId::parse`, and an `id` that does not parse (an old-format ID) is handled with `replace_existing` in `planIds`.
+- **`id`** is the text of the ID the driver **read in the code** (or `null`), **as written**: the core parses it with `NodeId::parse`, and the core classifies it: a `NodeId` is V-NOC's; an old UUID is replaced (`replace_existing` in `planIds`); anything else is the user's own `ID:` text and is left alone.
 - **`syntax_error`** is `true` for a def whose lines contain a parse error (S4/C17). It is on the safe side: an unclosed `(` after an operator can pull the next def into the broken one, so a neighbour may be flagged too. Never the other way round.
 - `fingerprints: true` adds `{ "body_hash", "tokens" }` per def (the body with comments, blank lines and indentation removed). **Post-MVP (P1)**: the matching ladder's steps 4-5 use it.
 
@@ -80,7 +80,7 @@ response: { "version": 7,
 ```
 - Planned on the **buffer** (`text`), never the file on disk. **`version` is echoed**: the host drops the plan if the document changed meanwhile and retries once (S3).
 - `edits` are in **old-text** coordinates (a `WorkspaceEdit` applies them all against the original). `written[].span` is in **new-text** coordinates and `written[].text` is the exact text inserted; the core stores both (removal later needs the exact text, S3).
-- A def with a syntax error is **skipped on its own**; the others still get their ID. A def that already has an `id` gets no edit, **unless the item says `replace_existing: true`**: then the driver **replaces the existing `ID:` line in place (its exact span) and never adds a second one**. The core sets it when the def's `id` is not a valid `NodeId` (an old-format ID, VS-D79); the driver does not know the ID syntax, so it cannot tell by itself. `unmatched` lists requested `(qualname, occurrence)` pairs that are not in the text.
+- A def with a syntax error is **skipped on its own**; the others still get their ID. **The driver acts on every item it is given; the core decides which defs need an ID** (it never asks for a def that already has a valid one) and the driver does not interpret an existing `ID:` line. **`replace_existing: true`** means: replace the existing `ID:` line **in place (its exact span)** instead of inserting; the core sets it **only when that line's value parses as an old UUID** (VS-D79). With `false` (the default) the driver **inserts V-NOC's own line, even if the docstring already holds other `ID:` text**, which is the user's. `unmatched` lists requested `(qualname, occurrence)` pairs that are not in the text.
 - Python writes an **`ID: <id>` line in the def's or class's docstring** (extending a docstring that exists, adding a `"""ID: …"""` statement otherwise). Nothing else: no comment form.
 - `text_hash` lets the core recognise "this is exactly what I predicted" after the save and skip a re-parse.
 
