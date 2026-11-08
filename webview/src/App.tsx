@@ -1,26 +1,9 @@
-import { Background, Controls, Handle, MiniMap, type Node, type NodeProps, Position, ReactFlow } from "@xyflow/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { request, vscode } from "./host.ts";
-import { type Placed, defaultCollapsed, layout } from "./layout.ts";
+import { Canvas } from "./canvas/Canvas.tsx";
+import { defaultCollapsed, layout } from "./canvas/layout.ts";
 import type { StructureResult } from "./types.ts";
-
-const ICON: Record<string, string> = { folder: "▸", file: "▤", class: "◆", function: "ƒ" };
-
-function Card({ data }: NodeProps<Node<Placed>>) {
-  const label = data.kind === "folder" ? `${data.name}/` : data.kind === "function" ? `${data.name}()` : data.name;
-  return (
-    <div className={`card ${data.kind}${data.syntaxError ? " broken" : ""}`} title={data.path}>
-      <Handle type="target" position={Position.Left} isConnectable={false} />
-      <span className="icon">{ICON[data.kind]}</span>
-      <span className="label">{label}</span>
-      {data.childCount > 0 && <span className="badge">{data.collapsed ? `+${data.childCount}` : "−"}</span>}
-      <Handle type="source" position={Position.Right} isConnectable={false} />
-    </div>
-  );
-}
-
-const nodeTypes = { card: Card };
 
 type Load = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; data: StructureResult };
 
@@ -53,8 +36,6 @@ export function App() {
   }, []);
 
   const laid = useMemo(() => (load.status === "ready" && collapsed ? layout(load.data.root, collapsed) : null), [load, collapsed]);
-  const nodes = useMemo(() => (laid?.nodes ?? []).map((p) => ({ id: p.id, type: "card", position: { x: p.x, y: p.y }, data: p, draggable: false })), [laid]);
-  const edges = useMemo(() => laid?.edges ?? [], [laid]);
 
   // Tell the host what was drawn: the extension's test suite uses it to prove the whole chain ran (bundle, request, core, driver, layout).
   useEffect(() => {
@@ -77,25 +58,7 @@ export function App() {
         )}
         <button onClick={refresh}>Refresh</button>
       </header>
-      <ReactFlow
-        key={reloads}
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        onNodeClick={(_, node) => (node.data as unknown as Placed).childCount > 0 && toggle(node.id)}
-        nodesDraggable={false}
-        nodesConnectable={false}
-        elementsSelectable={false}
-        onlyRenderVisibleElements
-        fitView
-        minZoom={0.02}
-        colorMode={document.body.classList.contains("vscode-light") ? "light" : "dark"}
-        proOptions={{ hideAttribution: true }}
-      >
-        <Background />
-        <Controls showInteractive={false} />
-        <MiniMap pannable zoomable />
-      </ReactFlow>
+      {laid && <Canvas key={reloads} laid={laid} onToggle={toggle} />}
     </div>
   );
 }

@@ -1,9 +1,10 @@
 // A simple, deterministic tree layout: one row per visible node, depth to the right. Pure, so it is tested without a browser.
 
-import type { Kind, TreeNode } from "./types.ts";
+import type { Kind, TreeNode } from "../types.ts";
 
 export const COL_W = 300;
-export const ROW_H = 56;
+/** One card (80 px, see node-card.css) plus a gap. Fixed until the code toggle makes cards grow and the layout has to measure them. */
+export const ROW_H = 96;
 
 // a `type`, not an interface: React Flow wants node data to be assignable to Record<string, unknown>
 export type Placed = {
@@ -11,6 +12,8 @@ export type Placed = {
   kind: Kind;
   name: string;
   path: string;
+  /** 1-based line where the definition starts; null for folders and files */
+  line: number | null;
   depth: number;
   x: number;
   y: number;
@@ -53,7 +56,7 @@ export function layout(root: TreeNode, collapsed: ReadonlySet<string>): Layout {
   const edges: Edge[] = [];
   const walk = (n: TreeNode, depth: number) => {
     const isCollapsed = n.children.length > 0 && collapsed.has(n.id);
-    nodes.push({ id: n.id, kind: n.kind, name: n.name, path: n.path, depth, x: depth * COL_W, y: nodes.length * ROW_H, childCount: n.children.length, collapsed: isCollapsed, syntaxError: n.syntax_error });
+    nodes.push({ id: n.id, kind: n.kind, name: n.name, path: n.path, line: n.range ? n.range.start.line + 1 : null, depth, x: depth * COL_W, y: nodes.length * ROW_H, childCount: n.children.length, collapsed: isCollapsed, syntaxError: n.syntax_error });
     if (isCollapsed) return;
     for (const c of n.children) {
       edges.push({ id: `${n.id}->${c.id}`, source: n.id, target: c.id });

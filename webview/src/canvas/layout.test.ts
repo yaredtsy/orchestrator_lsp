@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { COL_W, ROW_H, defaultCollapsed, layout } from "./layout.ts";
-import type { Kind, TreeNode } from "./types.ts";
+import type { Kind, TreeNode } from "../types.ts";
 
 const n = (id: string, kind: Kind, children: TreeNode[] = [], syntax_error = false): TreeNode => ({ id, kind, name: id, path: id, qualname: null, range: null, syntax_error, children });
 
