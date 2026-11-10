@@ -19,7 +19,47 @@ of it 0.1 creates**, plus one suggested field (`kind`).
 
 ## 1. Where it goes
 
-One `.vnoc/` per project, at the **git root**. If there is no git, at the opened folder.
+One `.vnoc/` per project. The folder that contains it is the **project root**, and every path V-NOC stores is relative to that folder.
+
+Where it goes is decided once, at the first "Add doc" (nothing is written before that, §4):
+
+```
+1. walk up from the opened folder; a folder that already has .vnoc/ → that is the project root. No question.
+2. else, no git anywhere above                                      → the opened folder. No question.
+3. else, the git root IS the opened folder                          → there. No question.
+4. else (you opened a folder inside a bigger repository)            → ask, once:
+```
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Where should V-NOC keep this project's docs?                                 │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ $(repo)    Repository root  (recommended)                                    │
+│            ~/work/shop                                                       │
+│            One .vnoc/ for the whole repository. Docs follow code that moves  │
+│            between its folders.                                              │
+│ $(folder)  This folder                                                       │
+│            ~/work/shop/services/api                                          │
+│            A separate V-NOC project for this folder only. Code that moves    │
+│            out of it loses its docs.                                         │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+This is a native `vscode.window.showQuickPick` with a `label`, `description` and `detail` per item and `ignoreFocusOut: true`. Esc cancels the attach;
+nothing is written. The answer is not stored anywhere except as the existence of `.vnoc/` itself, so the next person who clones the repo gets the
+same root by rule 1 and is never asked.
+
+Three consequences to know:
+
+- **The root must be fixed before the first ID is made.** An ID is a hash of the path *relative to the project root* (`05-identity/01`), so
+  `src/orders.py` and `services/api/src/orders.py` give different IDs. That is why the question comes before the attach and not after.
+- **Before the first attach** there is no root yet. The tree is built relative to the opened folder; paths are only shown, never stored.
+- **The window shows the opened folder; the project can be bigger.** With `.vnoc/` at the repository root and `services/api` opened, a node whose
+  stored path is outside `services/api` is "outside this window": it is not listed as Missing. Only nodes whose path is inside the opened folder can
+  be Missing here.
+
+One limit for 0.1: **one project per window.** If a scan meets a `.vnoc/` in a folder *below* the opened one (you opened the parent of a "This folder"
+project), V-NOC does not merge them. It shows one line: "A V-NOC project exists in `services/api`. Open that folder to see its docs."
 
 Finding the git root needs no git library: start at the opened folder and walk up until a folder contains an entry named `.git`.
 
@@ -32,7 +72,7 @@ Finding the git root needs no git library: start at the opened folder and walk u
 > ```
 > `.exists()` and not `.is_dir()`: in a git *worktree* or *submodule*, `.git` is a small **file** that points elsewhere.
 
-All paths V-NOC stores are relative to this root, with `/` separators. That is what `RepoPath` already enforces.
+All paths V-NOC stores are relative to the project root, with `/` separators. That is what `RepoPath` already enforces.
 
 ## 2. The 0.1 layout
 

@@ -67,7 +67,14 @@ V-NOC
 │   ├── language drivers ────────────────────────── 06-drivers.md
 │   │   ├── the wire                  JSON-RPC over stdin / stdout
 │   │   ├── what a driver must do     outline · plan IDs · (call trees)
-│   │   └── adding a language         checklist + conformance test
+│   │   └── pylspt                    stays its own repo; what belongs in it
+│   │
+│   ├── adding a language ───────────────────────── 09-adding-a-language/
+│   │   ├── who does what             extension · core · driver
+│   │   ├── what a driver must do     tier 1 structure · tier 2 markers · tier 3 call trees + paging
+│   │   ├── files and drivers         manifests, routing by extension, files with no driver
+│   │   ├── markers and unsafe files  where an ID may go; files never touched
+│   │   └── step by step              decision sheet · checklist · conformance test
 │   │
 │   └── UI ──────────────────────────────────────── 07-ui/
 │       ├── state                     who owns what, how it flows
@@ -84,6 +91,7 @@ V-NOC
 | the work list for the first release | [`02-mvp-and-releases.md`](02-mvp-and-releases.md) |
 | the storage design (you asked for extra care here) | [`04-storage/`](04-storage/README.md), all five files |
 | how IDs, files and folders are tracked | [`05-identity/`](05-identity/README.md) |
+| the guide to follow when you write a driver for a new language | [`09-adding-a-language/`](09-adding-a-language/README.md) |
 | what to paste into your decision log | [`08-decisions-to-log.md`](08-decisions-to-log.md) |
 
 ## Conventions in these files
