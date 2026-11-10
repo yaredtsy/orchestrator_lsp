@@ -173,7 +173,8 @@ Run it in CI for every driver in the repo. A driver written outside this repo ru
 
 ## 5. Packaging
 
-- [ ] the driver's folder: `drivers/<lang>/` (its own Cargo workspace if it needs its own toolchain, as Python does; otherwise a member of the root one)
+- [ ] the driver's folder: `drivers/<lang>/` (its own Cargo workspace if it needs its own toolchain, as Python does; otherwise a member of the root one),
+      with the analyzer and the driver as two crates: [`06-organizing-language-code.md`](06-organizing-language-code.md) §3
 - [ ] `scripts/package.mjs`: build the driver for the target platform, copy the program **and its manifest** into `extension/bin/`
 - [ ] CI: add it to the build matrix (same four platforms as the core)
 - [ ] check the VSIX size before and after; note it in the release notes

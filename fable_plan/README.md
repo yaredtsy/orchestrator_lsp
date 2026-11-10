@@ -74,11 +74,18 @@ V-NOC
 │   │   ├── what a driver must do     tier 1 structure · tier 2 markers · tier 3 call trees + paging
 │   │   ├── files and drivers         manifests, routing by extension, files with no driver
 │   │   ├── markers and unsafe files  where an ID may go; files never touched
-│   │   └── step by step              decision sheet · checklist · conformance test
+│   │   ├── step by step              decision sheet · checklist · conformance test
+│   │   └── organizing the code       driver vs analyzer · folder shape · pylspt's layout
 │   │
-│   └── UI ──────────────────────────────────────── 07-ui/
-│       ├── state                     who owns what, how it flows
-│       └── design                    sidebar · canvas · node card · doc panel
+│   ├── UI ──────────────────────────────────────── 07-ui/
+│   │   ├── state                     who owns what, how it flows
+│   │   └── design                    sidebar · canvas · node card · doc panel
+│   │
+│   └── git and release ─────────────────────────── 11-git-and-release/
+│       ├── git workflow              trunk · squash · PR titles · release-please · one version
+│       ├── every platform            8 targets · one build script · CI matrix · musl · Windows
+│       ├── publishing                Marketplace + Open VSX · listing · roll forward
+│       └── what this changes         one toolchain · fifth condition for split repos · files to add
 │
 └── WHAT I FOUND ────────────────────────────────── 01-review.md
 ```
@@ -92,6 +99,7 @@ V-NOC
 | the storage design (you asked for extra care here) | [`04-storage/`](04-storage/README.md), all five files |
 | how IDs, files and folders are tracked | [`05-identity/`](05-identity/README.md) |
 | the guide to follow when you write a driver for a new language | [`09-adding-a-language/`](09-adding-a-language/README.md) |
+| how to branch, build every platform and publish | [`11-git-and-release/`](11-git-and-release/README.md) |
 | what to paste into your decision log | [`08-decisions-to-log.md`](08-decisions-to-log.md) |
 
 ## Conventions in these files

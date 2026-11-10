@@ -9,7 +9,8 @@ adding a language
 ├── 02-what-a-driver-must-do.md      the contract, tier by tier (structure · markers · call trees + paging)
 ├── 03-files-and-driver-selection.md which files, which driver, files with no driver, missing drivers
 ├── 04-markers-and-unsafe-files.md   where an ID may be written, and the files it must never touch
-└── 05-step-by-step.md               the checklist, with a decision sheet to fill in per language
+├── 05-step-by-step.md               the checklist, with a decision sheet to fill in per language
+└── 06-organizing-language-code.md   where a language's code lives: driver vs analyzer, the folder shape, pylspt's layout, releases
 ```
 
 ## One word first: "driver", not "LSP"
