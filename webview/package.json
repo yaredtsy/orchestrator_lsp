@@ -6,7 +6,7 @@
     "build": "vite build",
     "dev": "vite build --watch",
     "typecheck": "tsc",
-    "test": "node --test --experimental-strip-types src/canvas/layout.test.ts"
+    "test": "node --test --experimental-strip-types src/canvas/layout.test.ts src/canvas/focusStack.test.ts"
   },
   "dependencies": {
     "@xyflow/react": "^12.3.0",

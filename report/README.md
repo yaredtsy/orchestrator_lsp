@@ -19,7 +19,9 @@ It starts broad and gets more detailed file by file. Read it in order, or jump t
 - **What's next:** finish milestone **M0** (CI that builds a VSIX), then **M1** (SQLite cache, sidebar tree, Quick look, Go to code).
 - **⚠ The plan docs are out of date in one big way.** The MVP was re-cut (draft row **VS-D78**): the MVP now **does** write an `ID:` line into your code when
   you attach a doc. `plan_vs/04-roadmap/` still says the opposite ("MVP never edits code, ID mode `none` only"). The new rows **VS-D78, VS-D79, VS-D80** exist only
-  as drafts in `spikes/s4-git/DRAFT-doc-rows.md` and are not in the decision log yet. Details: [`09-plan-docs-guide.md`](09-plan-docs-guide.md).
+  as drafts in `spikes/s4-git/DRAFT-doc-rows.md` and are not in the decision log yet. The full list: [`12-contradictions.md`](12-contradictions.md).
+- **pylspt** (the Python analyzer under the driver) hasn't changed since 2026-11-03. The MVP needs small changes from it (a facade, pinning by `rev`, `plan_ids` taking
+  V-NOC's IDs). Big repos will need lazy call-tree solving and real cancel later. Details: [`13-pylspt-whats-left.md`](13-pylspt-whats-left.md).
 - **⚠ One test fails right now**, and the code is not the cause: an empty file `crates/vnoc-domain/tests/fixtures/te.py` (untracked, created 2026-11-08 10:04) makes the fixture
   folder have 2 files instead of 1. Delete it and the test passes again. Details: [`05-code-rust-core.md`](05-code-rust-core.md#tests).
 
@@ -47,6 +49,8 @@ PHASE 3  build the MVP (M0–M6)         █░░░░░░░░░  walking
 | 9 | [`09-plan-docs-guide.md`](09-plan-docs-guide.md) | **which `plan_vs/` file to read for what**, which ones are stale | 5 min |
 | 10 | [`10-whats-left.md`](10-whats-left.md) | the to-do list, in order | 5 min |
 | 11 | [`11-glossary.md`](11-glossary.md) | every term (VS Code + V-NOC) on one page | look-up |
+| 12 | [`12-contradictions.md`](12-contradictions.md) | **every place the plan, the drafts and the code disagree**, with the file to fix and where the fix text is | 10 min |
+| 13 | [`13-pylspt-whats-left.md`](13-pylspt-whats-left.md) | what V-NOC still needs from pylspt, and pylspt's own roadmap status | 10 min |
 
 ## How this report was made
 

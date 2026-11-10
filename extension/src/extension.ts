@@ -3,6 +3,8 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { LanguageClient, TransportKind } from "vscode-languageclient/node";
 
+import { StructureView, type TreeNode } from "./structureView";
+
 // The core is a separate process: this extension starts it (vscode-languageclient is only a very good JSON-RPC-over-stdio
 // client here, we use its custom-request API and none of the language features) and relays the webview's requests to it.
 // The extension never starts a driver: the core owns the drivers.
@@ -17,6 +19,11 @@ let rendered: { visible: number; hidden: number } | undefined;
 const renderWaiters: ((r: { visible: number; hidden: number }) => void)[] = [];
 
 const PANEL = "vnoc.canvas";
+
+/** The one canvas panel (a second `Open canvas` or a Focus click shows this one again). */
+let canvas: vscode.WebviewPanel | undefined;
+/** A focus asked for while the canvas was closed: the new webview takes it when it starts. */
+let pendingFocus: string | undefined;
 
 /**
  * A binary path: the setting if set, else the build folder of this repository (development layout: `extension/` sits next to
@@ -50,6 +57,13 @@ async function request<T>(method: string, params?: object): Promise<T> {
   return client!.sendRequest<T>(method, params);
 }
 
+/** The structure of the opened folder; the canvas and the sidebar both read it through here. */
+function loadStructure<T = { root: TreeNode }>(): Promise<T> {
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  if (!folder) return Promise.reject(new Error("Open a folder first: V-NOC shows the code of the folder you opened."));
+  return request<T>("vnoc/structure", { root: folder.uri.fsPath });
+}
+
 export function activate(ctx: vscode.ExtensionContext) {
   output = vscode.window.createOutputChannel("V-NOC");
   ready = startCore(ctx);
@@ -58,18 +72,22 @@ export function activate(ctx: vscode.ExtensionContext) {
     vscode.window.showErrorMessage(String(e.message ?? e));
   });
 
+  const sidebar = new StructureView(async () => (await loadStructure()).root);
+  void sidebar.refresh();
+
   // Registered synchronously, before anything is awaited: on restart VS Code waits for this serializer (S1).
   ctx.subscriptions.push(
-    vscode.commands.registerCommand("vnoc.openCanvas", () => {
-      const panel = vscode.window.createWebviewPanel(PANEL, "V-NOC canvas", vscode.ViewColumn.Active, panelOptions(ctx));
-      setupPanel(ctx, panel);
-    }),
+    vscode.commands.registerCommand("vnoc.openCanvas", () => showCanvas(ctx)),
     vscode.window.registerWebviewPanelSerializer(PANEL, {
       async deserializeWebviewPanel(panel) {
         panel.webview.options = panelOptions(ctx);
-        setupPanel(ctx, panel);
+        adopt(ctx, panel);
       },
     }),
+    vscode.window.registerTreeDataProvider("vnoc.structure", sidebar),
+    vscode.commands.registerCommand("vnoc.refreshStructure", () => sidebar.refresh(true)),
+    // the hover button on a sidebar item: the canvas opens (or comes to the front) showing just that item
+    vscode.commands.registerCommand("vnoc.focus", (node: TreeNode) => focusOnCanvas(ctx, node.id)),
     { dispose: () => client?.stop() },
   );
 
@@ -85,6 +103,32 @@ export function activate(ctx: vscode.ExtensionContext) {
         renderWaiters.push((r) => (clearTimeout(t), resolve(r)));
       }),
   };
+}
+
+function showCanvas(ctx: vscode.ExtensionContext): vscode.WebviewPanel {
+  if (canvas) {
+    canvas.reveal();
+    return canvas;
+  }
+  const panel = vscode.window.createWebviewPanel(PANEL, "V-NOC canvas", vscode.ViewColumn.Active, panelOptions(ctx));
+  adopt(ctx, panel);
+  return panel;
+}
+
+function adopt(ctx: vscode.ExtensionContext, panel: vscode.WebviewPanel) {
+  canvas = panel;
+  panel.onDidDispose(() => {
+    if (canvas === panel) canvas = undefined;
+  });
+  setupPanel(ctx, panel);
+}
+
+function focusOnCanvas(ctx: vscode.ExtensionContext, id: string) {
+  const wasOpen = canvas !== undefined;
+  const panel = showCanvas(ctx);
+  // an open canvas is told now; a canvas that is just starting asks for it (the `pendingFocus` request)
+  if (wasOpen) panel.webview.postMessage({ type: "focus", id });
+  else pendingFocus = id;
 }
 
 function distUri(ctx: vscode.ExtensionContext): vscode.Uri {
@@ -118,9 +162,10 @@ function setupPanel(ctx: vscode.ExtensionContext, panel: vscode.WebviewPanel) {
     try {
       let result: unknown;
       if (m.method === "structure") {
-        const folder = vscode.workspace.workspaceFolders?.[0];
-        if (!folder) throw new Error("Open a folder first: V-NOC shows the code of the folder you opened.");
-        result = await request("vnoc/structure", { root: folder.uri.fsPath });
+        result = await loadStructure();
+      } else if (m.method === "pendingFocus") {
+        result = pendingFocus ?? null;
+        pendingFocus = undefined;
       } else if (m.method === "ping") {
         result = await request("vnoc/ping");
       } else {

@@ -15,7 +15,18 @@
     }
   },
   "contributes": {
-    "commands": [{ "command": "vnoc.openCanvas", "title": "V-NOC: Open canvas" }],
+    "viewsContainers": { "activitybar": [{ "id": "vnoc", "title": "V-NOC", "icon": "media/vnoc.svg" }] },
+    "views": { "vnoc": [{ "id": "vnoc.structure", "name": "Structure" }] },
+    "commands": [
+      { "command": "vnoc.openCanvas", "title": "V-NOC: Open canvas" },
+      { "command": "vnoc.focus", "title": "V-NOC: Focus on the canvas", "icon": "$(target)" },
+      { "command": "vnoc.refreshStructure", "title": "V-NOC: Refresh structure", "icon": "$(refresh)" }
+    ],
+    "menus": {
+      "view/item/context": [{ "command": "vnoc.focus", "when": "view == vnoc.structure", "group": "inline" }],
+      "view/title": [{ "command": "vnoc.refreshStructure", "when": "view == vnoc.structure", "group": "navigation" }],
+      "commandPalette": [{ "command": "vnoc.focus", "when": "false" }]
+    },
     "configuration": {
       "title": "V-NOC",
       "properties": {

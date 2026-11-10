@@ -21,10 +21,19 @@ window.addEventListener("message", (e: MessageEvent) => {
   else p.resolve(e.data.result);
 });
 
-export function request<T>(method: "structure" | "ping"): Promise<T> {
+export function request<T>(method: "structure" | "ping" | "pendingFocus"): Promise<T> {
   const id = ++nextId;
   return new Promise<T>((resolve, reject) => {
     pending.set(id, { resolve, reject });
     vscode.postMessage({ type: "req", id, method });
   });
+}
+
+/** The sidebar's Focus button: the host tells an open canvas which node to zoom into. Returns the way to stop listening. */
+export function onFocus(callback: (id: string) => void): () => void {
+  const listener = (e: MessageEvent) => {
+    if (e.data?.type === "focus" && typeof e.data.id === "string") callback(e.data.id);
+  };
+  window.addEventListener("message", listener);
+  return () => window.removeEventListener("message", listener);
 }

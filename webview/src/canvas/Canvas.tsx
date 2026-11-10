@@ -11,7 +11,7 @@ const nodeTypes = { card: NodeCard };
 
 const toFlow = (laid: Layout): Node<Placed>[] => laid.nodes.map((p) => ({ id: p.id, type: "card", position: { x: p.x, y: p.y }, data: p }));
 
-export function Canvas({ laid, onToggle }: { laid: Layout; onToggle: (id: string) => void }) {
+export function Canvas({ laid, onToggle, onFocus }: { laid: Layout; onToggle: (id: string) => void; onFocus: (id: string) => void }) {
   // The layout decides where nodes start; dragging moves them in this state. A new layout (expand, collapse, refresh) puts them back in their rows.
   const [nodes, setNodes, onNodesChange] = useNodesState(toFlow(laid)); // starting with the nodes (not []) lets fitView frame them on first paint
   useEffect(() => setNodes(toFlow(laid)), [laid, setNodes]);
@@ -23,6 +23,8 @@ export function Canvas({ laid, onToggle }: { laid: Layout; onToggle: (id: string
         edges={laid.edges}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
+        onNodeDoubleClick={(_, node) => onFocus(node.id)}
+        zoomOnDoubleClick={false}
         nodesConnectable={false}
         onlyRenderVisibleElements
         fitView

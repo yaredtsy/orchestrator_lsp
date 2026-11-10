@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { request, vscode } from "./host.ts";
+import { onFocus, request, vscode } from "./host.ts";
 import { Canvas } from "./canvas/Canvas.tsx";
+import { type FocusStack, jump, prune, push } from "./canvas/focusStack.ts";
 import { defaultCollapsed, layout } from "./canvas/layout.ts";
+import { findNode } from "./tree.ts";
 import type { StructureResult } from "./types.ts";
 
 type Load = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; data: StructureResult };
@@ -10,8 +12,9 @@ type Load = { status: "loading" } | { status: "error"; message: string } | { sta
 export function App() {
   const [load, setLoad] = useState<Load>({ status: "loading" });
   const [reloads, setReloads] = useState(0);
-  const saved = vscode.getState<{ collapsed: string[] }>();
+  const saved = vscode.getState<{ collapsed: string[]; focus?: string[] }>();
   const [collapsed, setCollapsed] = useState<Set<string> | null>(saved ? new Set(saved.collapsed) : null);
+  const [focus, setFocus] = useState<FocusStack>(saved?.focus ?? []);
 
   const refresh = useCallback(() => {
     setLoad({ status: "loading" });
@@ -30,12 +33,35 @@ export function App() {
     setCollapsed((c) => {
       const next = new Set(c ?? []);
       if (!next.delete(id)) next.add(id);
-      vscode.setState({ collapsed: [...next] }); // survives closing and reopening the panel
       return next;
     });
   }, []);
+  const focusOn = useCallback((id: string) => setFocus((f) => push(f, id)), []);
 
-  const laid = useMemo(() => (load.status === "ready" && collapsed ? layout(load.data.root, collapsed) : null), [load, collapsed]);
+  // survives closing and reopening the panel
+  useEffect(() => {
+    if (collapsed) vscode.setState({ collapsed: [...collapsed], focus });
+  }, [collapsed, focus]);
+
+  // A Focus click in the sidebar: while the canvas is open the host sends it; a canvas opened by that click asks for it once it is up.
+  useEffect(() => {
+    request<string | null>("pendingFocus").then((id) => id && focusOn(id), () => {});
+    return onFocus(focusOn);
+  }, [focusOn]);
+
+  // After a refresh the node we were zoomed into may be gone: drop the stack down to one that still exists.
+  const root = load.status === "ready" ? load.data.root : null;
+  useEffect(() => {
+    if (root) setFocus((f) => prune(f, (id) => findNode(root, id) !== null));
+  }, [root]);
+  const crumbs = useMemo(() => (root ? focus.map((id) => ({ id, node: findNode(root, id) })) : []), [root, focus]);
+  const top = crumbs.length > 0 ? crumbs[crumbs.length - 1].node : null;
+
+  const laid = useMemo(() => {
+    if (!root || !collapsed) return null;
+    // zoomed in: the focused node is the root of what is drawn, and it is open (otherwise there would be nothing to see)
+    return top ? layout(top, new Set([...collapsed].filter((id) => id !== top.id))) : layout(root, collapsed);
+  }, [root, collapsed, top]);
 
   // Tell the host what was drawn: the extension's test suite uses it to prove the whole chain ran (bundle, request, core, driver, layout).
   useEffect(() => {
@@ -58,7 +84,20 @@ export function App() {
         )}
         <button onClick={refresh}>Refresh</button>
       </header>
-      {laid && <Canvas key={reloads} laid={laid} onToggle={toggle} />}
+      {crumbs.length > 0 && (
+        <nav className="crumbs" aria-label="Focus">
+          <button onClick={() => setFocus((f) => jump(f, 0))}>All code</button>
+          {crumbs.map((c, i) => (
+            <span key={c.id}>
+              <span className="sep">›</span>
+              <button disabled={i === crumbs.length - 1} onClick={() => setFocus((f) => jump(f, i + 1))}>
+                {c.node?.name ?? "?"}
+              </button>
+            </span>
+          ))}
+        </nav>
+      )}
+      {laid && <Canvas key={`${reloads}:${top?.id ?? ""}`} laid={laid} onToggle={toggle} onFocus={focusOn} />}
     </div>
   );
 }

@@ -1,6 +1,10 @@
 //! The structure of the scope held in memory: folders, files, classes, functions. Skeleton: rebuilt from `vnoc/outline` on each
 //! request; M1 puts it behind the store trait (SQLite).
 
+use std::cmp::Ordering;
+use std::iter::Peekable;
+use std::str::Chars;
+
 use serde::{Deserialize, Serialize};
 use vnoc_domain::{LocationKey, RepoPath, occurrences};
 use vnoc_driver_protocol::{Def, DefKind, Range};
@@ -51,13 +55,57 @@ impl Node {
         c
     }
 
-    /// folders first, then files, then by name; defs keep their source order
+    /// The order of VS Code's explorer: folders first, then files, each by `natural_cmp`; defs keep their source order
     fn sort(&mut self) {
         if matches!(self.kind, Kind::Folder) {
-            self.children.sort_by(|a, b| (!matches!(a.kind, Kind::Folder), &a.name).cmp(&(!matches!(b.kind, Kind::Folder), &b.name)));
+            self.children.sort_by(|a, b| {
+                let (a_dir, b_dir) = (matches!(a.kind, Kind::Folder), matches!(b.kind, Kind::Folder));
+                // `false < true`, so comparing b to a puts the folders (true) first
+                b_dir.cmp(&a_dir).then_with(|| natural_cmp(&a.name, &b.name))
+            });
         }
         self.children.iter_mut().for_each(Node::sort);
     }
+}
+
+/// Names the way VS Code's explorer sorts them: ignoring case (`B.py` after `a.py`), and a run of digits is one number (`f2` before `f10`).
+/// Names that are equal under those rules fall back to the exact text, so the order is total and stable between runs.
+fn natural_cmp(a: &str, b: &str) -> Ordering {
+    let (mut x, mut y) = (a.chars().peekable(), b.chars().peekable());
+    loop {
+        match (x.peek().copied(), y.peek().copied()) {
+            (None, None) => return a.cmp(b),
+            (None, Some(_)) => return Ordering::Less,
+            (Some(_), None) => return Ordering::Greater,
+            (Some(c), Some(d)) if c.is_ascii_digit() && d.is_ascii_digit() => {
+                let (m, n) = (take_digits(&mut x), take_digits(&mut y));
+                // compare as numbers without parsing them (a long run would overflow): after leading zeros, fewer digits is smaller, same length compares as text
+                let (m, n) = (m.trim_start_matches('0'), n.trim_start_matches('0'));
+                match m.len().cmp(&n.len()).then_with(|| m.cmp(n)) {
+                    Ordering::Equal => {}
+                    other => return other,
+                }
+            }
+            (Some(c), Some(d)) => {
+                // `to_lowercase` yields an iterator (a char can lowercase to several), and iterators compare element by element
+                match c.to_lowercase().cmp(d.to_lowercase()) {
+                    Ordering::Equal => {
+                        x.next();
+                        y.next();
+                    }
+                    other => return other,
+                }
+            }
+        }
+    }
+}
+
+fn take_digits(chars: &mut Peekable<Chars>) -> String {
+    let mut run = String::new();
+    while let Some(c) = chars.next_if(|c| c.is_ascii_digit()) {
+        run.push(c);
+    }
+    run
 }
 
 /// Builds the tree. A file whose path is not a valid repo path is left out (it cannot get a location key).
@@ -141,6 +189,21 @@ mod tests {
         let p = Position { line: 0, character: 0 };
         Def { qualname: qualname.into(), name: qualname.rsplit('.').next().unwrap().into(), kind, parent: parent.into(), parent_kind: None, range: Range { start: p, end: p }, params: vec![], id: None, syntax_error: false }
     }
+    #[test]
+    fn names_sort_like_the_vscode_explorer() {
+        let mut v = vec!["b.py", "B2.py", "a10.py", "a2.py", "A.py", "a02.py", "_x.py", "a.py"];
+        v.sort_by(|a, b| natural_cmp(a, b));
+        // case is ignored, digit runs are numbers (2 = 02 < 10), and exact ties (A.py / a.py) fall back to the text
+        assert_eq!(v, ["_x.py", "A.py", "a.py", "a02.py", "a2.py", "a10.py", "b.py", "B2.py"]);
+    }
+
+    #[test]
+    fn folders_come_before_files_at_every_level() {
+        let mut root = build("r", vec![FileDefs { path: "Zeta.py".into(), defs: vec![] }, FileDefs { path: "lib/b.py".into(), defs: vec![] }, FileDefs { path: "alpha.py".into(), defs: vec![] }]);
+        root.sort();
+        assert_eq!(root.children.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), ["lib", "alpha.py", "Zeta.py"]);
+    }
+
     fn names(n: &Node) -> Vec<String> {
         n.children.iter().map(|c| c.name.clone()).collect()
     }
