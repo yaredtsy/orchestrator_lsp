@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { COL_W, ROW_H, defaultCollapsed, layout } from "./layout.ts";
+import { CODE_H, COL_W, ROW_H, defaultCollapsed, layout } from "./layout.ts";
 import type { Kind, TreeNode } from "../types.ts";
 
 const n = (id: string, kind: Kind, children: TreeNode[] = [], syntax_error = false): TreeNode => ({ id, kind, name: id, path: id, qualname: null, range: null, syntax_error, children });
@@ -46,4 +46,12 @@ test("a leaf is never shown as collapsed, and syntax errors are carried through"
 test("ids stay unique, so an expand toggle always hits one node", () => {
   const l = layout(tree, new Set());
   assert.equal(new Set(l.nodes.map((p) => p.id)).size, l.nodes.length);
+});
+
+test("an open code view pushes the rows below it down, and only defs have code", () => {
+  const range = { start: { line: 0, character: 0 }, end: { line: 3, character: 0 } };
+  const t = n("/", "folder", [n("a.py", "file", [{ ...n("f", "function"), range }, n("g", "function")])]);
+  const l = layout(t, new Set(), new Set(["f", "a.py"]));
+  assert.deepEqual(l.nodes.map((p) => p.y), [0, ROW_H, 2 * ROW_H, 3 * ROW_H + CODE_H], "f is open and taller, so g starts lower; a.py has no range, so asking for its code does nothing");
+  assert.deepEqual(l.nodes.map((p) => p.codeOpen), [false, false, true, false]);
 });

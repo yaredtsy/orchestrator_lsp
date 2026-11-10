@@ -105,6 +105,18 @@ export function activate(ctx: vscode.ExtensionContext) {
   };
 }
 
+type Slice = { path: string; range: { start: { line: number; character: number }; end: { line: number; character: number } } };
+
+/** The text of a definition, from VS Code's document (so unsaved edits show). The path comes from the webview, so it must stay inside the opened folder. */
+async function readSlice({ path: relative, range: r }: Slice): Promise<string> {
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  if (!folder) throw new Error("Open a folder first.");
+  const file = path.resolve(folder.uri.fsPath, relative);
+  if (!file.startsWith(folder.uri.fsPath + path.sep)) throw new Error(`${relative} is outside the opened folder`);
+  const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
+  return doc.getText(new vscode.Range(r.start.line, r.start.character, r.end.line, r.end.character));
+}
+
 function showCanvas(ctx: vscode.ExtensionContext): vscode.WebviewPanel {
   if (canvas) {
     canvas.reveal();
@@ -151,7 +163,7 @@ function setupPanel(ctx: vscode.ExtensionContext, panel: vscode.WebviewPanel) {
 <script nonce="${nonce}" type="module" src="${asUri("assets/index.js")}"></script></body></html>`;
 
   // The webview cannot reach the core. It posts a request; we relay it and post the answer back.
-  panel.webview.onDidReceiveMessage(async (m: { type: string; id: number; method: string; visible?: number; hidden?: number }) => {
+  panel.webview.onDidReceiveMessage(async (m: { type: string; id: number; method: string; params?: any; visible?: number; hidden?: number }) => {
     if (m.type === "rendered") {
       rendered = { visible: m.visible ?? 0, hidden: m.hidden ?? 0 };
       output.appendLine(`webview drew ${rendered.visible} nodes (${rendered.hidden} hidden)`);
@@ -163,6 +175,8 @@ function setupPanel(ctx: vscode.ExtensionContext, panel: vscode.WebviewPanel) {
       let result: unknown;
       if (m.method === "structure") {
         result = await loadStructure();
+      } else if (m.method === "code") {
+        result = await readSlice(m.params);
       } else if (m.method === "pendingFocus") {
         result = pendingFocus ?? null;
         pendingFocus = undefined;

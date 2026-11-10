@@ -14,6 +14,7 @@ export function App() {
   const [reloads, setReloads] = useState(0);
   const saved = vscode.getState<{ collapsed: string[]; focus?: string[] }>();
   const [collapsed, setCollapsed] = useState<Set<string> | null>(saved ? new Set(saved.collapsed) : null);
+  const [codeOpen, setCodeOpen] = useState<ReadonlySet<string>>(new Set());
   const [focus, setFocus] = useState<FocusStack>(saved?.focus ?? []);
 
   const refresh = useCallback(() => {
@@ -32,6 +33,13 @@ export function App() {
   const toggle = useCallback((id: string) => {
     setCollapsed((c) => {
       const next = new Set(c ?? []);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }, []);
+  const toggleCode = useCallback((id: string) => {
+    setCodeOpen((open) => {
+      const next = new Set(open);
       if (!next.delete(id)) next.add(id);
       return next;
     });
@@ -60,8 +68,8 @@ export function App() {
   const laid = useMemo(() => {
     if (!root || !collapsed) return null;
     // zoomed in: the focused node is the root of what is drawn, and it is open (otherwise there would be nothing to see)
-    return top ? layout(top, new Set([...collapsed].filter((id) => id !== top.id))) : layout(root, collapsed);
-  }, [root, collapsed, top]);
+    return top ? layout(top, new Set([...collapsed].filter((id) => id !== top.id)), codeOpen) : layout(root, collapsed, codeOpen);
+  }, [root, collapsed, top, codeOpen]);
 
   // Tell the host what was drawn: the extension's test suite uses it to prove the whole chain ran (bundle, request, core, driver, layout).
   useEffect(() => {
@@ -97,7 +105,7 @@ export function App() {
           ))}
         </nav>
       )}
-      {laid && <Canvas key={`${reloads}:${top?.id ?? ""}`} laid={laid} onToggle={toggle} onFocus={focusOn} />}
+      {laid && <Canvas key={`${reloads}:${top?.id ?? ""}`} laid={laid} onToggle={toggle} onToggleCode={toggleCode} onFocus={focusOn} />}
     </div>
   );
 }

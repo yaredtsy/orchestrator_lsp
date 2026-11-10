@@ -6,6 +6,8 @@ import { createContext, useContext } from "react";
 export interface CanvasActions {
   /** expand or collapse a node's children */
   toggle(id: string): void;
+  /** show or hide a node's code inside its card */
+  toggleCode(id: string): void;
 }
 
 const Ctx = createContext<CanvasActions | null>(null);

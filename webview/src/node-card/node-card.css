@@ -18,3 +18,11 @@
 
 .node-body { flex: 1; padding: 4px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 24px; opacity: .85; }
 .node-footer { padding: 0 10px; height: 20px; line-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; opacity: .55; }
+
+.node-card.code-open { height: 300px; }
+.node-header .code-toggle { flex: none; padding: 0 5px; height: 18px; border: 0; border-radius: 3px; background: transparent; color: inherit; font: 11px var(--vscode-editor-font-family, monospace); cursor: pointer; opacity: .7; }
+.node-header .code-toggle:hover, .node-header .code-toggle.on { opacity: 1; background: var(--vscode-toolbar-hoverBackground, #ffffff1a); }
+.node-code { flex: 1; min-height: 0; margin: 0; padding: 4px 0; overflow: auto; font: 11px/1.5 var(--vscode-editor-font-family, monospace); white-space: pre; cursor: text; user-select: text; }
+.node-code .ln { display: inline-block; width: 3.2em; padding-right: 1em; text-align: right; opacity: .4; user-select: none; }
+.node-code.muted { padding: 4px 10px; opacity: .6; }
+.node-code.error { padding: 4px 10px; color: var(--vscode-errorForeground, #f48771); white-space: pre-wrap; }

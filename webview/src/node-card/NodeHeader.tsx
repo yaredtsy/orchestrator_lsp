@@ -3,7 +3,7 @@ import type { Placed } from "../canvas/layout.ts";
 import { KINDS } from "./kinds.ts";
 
 export function NodeHeader({ node }: { node: Placed }) {
-  const { toggle } = useCanvasActions();
+  const { toggle, toggleCode } = useCanvasActions();
   const kind = KINDS[node.kind];
   return (
     <div className="node-header">
@@ -23,6 +23,11 @@ export function NodeHeader({ node }: { node: Placed }) {
       <span className="icon">{kind.icon}</span>
       <span className="label">{kind.title(node.name)}</span>
       {node.collapsed && <span className="badge">+{node.childCount}</span>}
+      {node.range && (
+        <button className={`code-toggle nodrag nopan${node.codeOpen ? " on" : ""}`} aria-pressed={node.codeOpen} aria-label={`Show the code of ${node.name}`} onClick={() => toggleCode(node.id)}>
+          {"</>"}
+        </button>
+      )}
     </div>
   );
 }
