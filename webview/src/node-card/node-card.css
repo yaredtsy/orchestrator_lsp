@@ -26,3 +26,4 @@
 .node-code .ln { display: inline-block; width: 3.2em; padding-right: 1em; text-align: right; opacity: .4; user-select: none; }
 .node-code.muted { padding: 4px 10px; opacity: .6; }
 .node-code.error { padding: 4px 10px; color: var(--vscode-errorForeground, #f48771); white-space: pre-wrap; }
+.node-code.monaco-host { padding: 0; overflow: hidden; cursor: default; }
