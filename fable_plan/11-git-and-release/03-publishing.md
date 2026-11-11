@@ -31,7 +31,7 @@ likely to try a tool like V-NOC use Cursor. **Publish to both, every release, fr
    Then ask for it to be verified (an issue on the open-vsx repo); a verified namespace shows a check mark and stops others from claiming the name.
 4. GitHub → vnoc → Settings → Environments → New "marketplace":
      required reviewer: you          (the publish job waits for your click)
-     deployment branches: tags v*    (nothing else may publish)
+     deployment tags: vnoc-v*, driver-*-v*    (nothing else may publish)
      secrets: VSCE_PAT, OVSX_PAT
 5. Put a reminder in your calendar: Azure DevOps tokens expire (one year at most). An expired token fails the publish job, not the build.
 ```
@@ -50,9 +50,9 @@ The Marketplace page is built from the package. Today's `package.json` would pro
   "displayName": "V-NOC",
   "publisher": "<Q-R2>",
   "description": "See your code as a graph and keep docs attached to functions and classes, even after a rename.",
-  "version": "0.1.0",                                         // release-please writes it
+  "version": "0.0.0",                                         // stays 0.0.0 in git; pack.mjs stamps the tag's number (01 §4)
   "preview": true,                                           // §4: the "Preview" badge while 0.x
-  "license": "<Q-R1>",                                       // an SPDX id: "MIT" or "Apache-2.0"
+  "license": "Apache-2.0",                                   // Q-R1, answered 2026-11-10
   "icon": "media/icon.png",                                  // 128×128 PNG. The Marketplace does not accept SVG here.
   "repository": { "type": "git", "url": "https://github.com/yaredtsy/vnoc" },
   "bugs": { "url": "https://github.com/yaredtsy/vnoc/issues" },
@@ -74,6 +74,17 @@ and `bin/`):
 | `extension/media/icon.png` | the icon | 128 × 128, readable at 32 × 32, works on light and dark backgrounds |
 
 The README is the store page most people decide on. Write it last before the first release, from a fresh machine's point of view.
+
+**Apache-2.0 in practice** (three small things, once):
+
+- `LICENSE` at the root of vnoc and of pylspt: the standard Apache-2.0 text, unchanged. No per-file headers are required; do not add them.
+- `license = "Apache-2.0"` in `[workspace.package]` of the root `Cargo.toml` (crates inherit it with `license.workspace = true`) and in every
+  `package.json`, language packs included.
+- pylspt keeps `vendor/ruff/LICENSE` (MIT) beside the vendored code. Because the driver's binary contains that code, the packages that carry
+  the Python driver also ship a `THIRD-PARTY-NOTICES` file with ruff's licence text. `cargo about` can generate it for all Rust dependencies
+  **[check when setting up `pack.mjs`]**.
+
+A **language pack** needs the same four files in its own folder (`drivers/<lang>/`), and the same fields; see [`05`](05-language-packs.md) §2.
 
 ## 4. Versions on the stores
 
@@ -105,13 +116,16 @@ publish:
   environment: marketplace
   steps:
     - download every .vsix artifact into dist/
-    - run: npx @vscode/vsce publish --packagePath dist/*.vsix
+    - run: npx @vscode/vsce publish --skip-duplicate --packagePath dist/*.vsix
       env: { VSCE_PAT: ${{ secrets.VSCE_PAT }} }
-    - run: for f in dist/*.vsix; do npx ovsx publish "$f" -p "$OVSX_PAT"; done
+    - run: for f in dist/*.vsix; do npx ovsx publish --skip-duplicate "$f" -p "$OVSX_PAT"; done
       env: { OVSX_PAT: ${{ secrets.OVSX_PAT }} }
 ```
 
 - `vsce publish --packagePath` with several files uploads all the platform packages of one version.
+- `--skip-duplicate` makes the job safe to run twice for one tag: what a store already has is skipped. That is how a target that failed on
+  release day is added later (§02-4), and how a half-finished publish is finished.
+- The same job publishes the core or a language pack; it uploads whatever `.vsix` files the build made for that tag.
 - The two stores are separate steps: if Open VSX is down, the Marketplace release still went out, and you re-run only the failed step (GitHub's
   "Re-run failed jobs").
 - Nobody publishes from a laptop. If it is not in CI, it did not happen: every published file then has a public build log and a tag.
@@ -132,15 +146,20 @@ If the bug can lose users' docs, say so at the top of the CHANGELOG entry of the
 ## 7. The first release, as a checklist
 
 ```
-□ Q-R1 licence: LICENSE at the root of vnoc and pylspt
-□ Q-R2 publisher id: free on both stores; set in package.json
+□ Q-R1 licence: Apache-2.0 LICENSE at the root of vnoc and pylspt; THIRD-PARTY-NOTICES in the package (§3)
+□ Q-R2 publisher id: free on both stores, for `vnoc` and the `vnoc-*` pack names; set in package.json
 □ Q-R3 repos public
 □ .gitattributes in both repos (§02-6)
 □ one toolchain (04-what-this-changes.md §1)
-□ build scripts split; ci.yml and release.yml as in §02-4
-□ release-please set up; first manifest version 0.1.0
+□ every Cargo.toml and package.json at version 0.0.0; VNOC_VERSION read by the core and the driver (§01-4)
+□ drivers/python/package.json; build scripts split; ci.yml with ci-ok; release.yml (§02-3, §02-4)
+□ ui-rework merged; branch protection on, requiring only ci-ok (§01-1)
 □ package.json fields, README, icon, CHANGELOG (§3)
-□ one dry run: push a tag on a test repo or with publish disabled; install each .vsix on a real machine for darwin-arm64, linux-x64, win32-x64
+□ one dry run: start release.yml by hand for a test tag with the publish job not approved; install each .vsix on a real machine for
+  darwin-arm64, linux-x64, win32-x64
+□ the pylspt pin is a tag, not a rev (§01-7)
+□ the GitHub App for release-please; release-please set up; first manifest version 0.1.0 (§01-5)
+□ nightly.yml on
 □ Gatekeeper / SmartScreen check on a clean Mac and a clean Windows machine (§02-9)
 □ environment "marketplace" with the two tokens and you as reviewer
 □ merge the release PR → approve the publish → install from the store on a machine that never had V-NOC

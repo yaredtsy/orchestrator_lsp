@@ -11,8 +11,13 @@ git and release
 ├── 01-git-workflow.md            branches, pull requests, commit titles, versions, the release PR, hotfixes, the two repos
 ├── 02-building-every-platform.md the eight VS Code targets, one build script, the CI matrix, Linux / Windows / macOS details
 ├── 03-publishing.md              Marketplace + Open VSX, one-time setup, what the listing needs, rolling forward
-└── 04-what-this-changes.md       the organization, revisited: toolchain, versions, pylspt, files to add
+├── 04-what-this-changes.md       the organization, revisited: toolchain, versions, pylspt, files to add
+└── 05-language-packs.md          one download per language: each driver is its own small extension
 ```
+
+**Revised 2026-11-10 (second pass)** after a review against the real repos. Three things in the first version would have failed
+(release-please's tag starts no workflow; `--locked` against a stale lockfile; the hotfix tag shipped the old version number), and adding a language
+touched six hand-edited places. The fixes are R10–R13; "download a language when needed" is R14–R16. Changed rows are marked.
 
 ## 1. Where things stand
 
@@ -33,20 +38,25 @@ Sizes today (darwin-arm64, release): core 5.5 MB, Python driver 13.9 MB, `.vsix`
 ```
 contributor                   GitHub (vnoc)                                                users
 ────────────                  ──────────────────────────────────────────────               ─────
-feat/sidebar-webview ──PR──►  ci.yml: Linux · macOS · Windows, every PR
+feat/sidebar-webview ──PR──►  ci.yml: only the jobs the changed paths need; one required check "ci-ok"
                               squash-merge → main (always releasable)
                                    │
-                              release-please keeps a "release 0.2.0" PR open,
-                              with the version bump and CHANGELOG from PR titles
-                                   │  you merge it
-                              tag v0.2.0 ──► release.yml
-                                              ├── build × 8 targets (vnoc core + driver per platform; JS once)
+                              release-please keeps one release PR open PER THING that changed:
+                              "release vnoc 0.2.0" · "release driver-python 0.1.3"   (CHANGELOG from PR titles)
+                                   │  you merge one
+                              tag vnoc-v0.2.0 ──► release.yml          (the tag IS the version; no file is bumped)
+                                              ├── build that one thing for its targets
                                               ├── smoke-test each binary where the runner can run it
-                                              ├── GitHub Release with the 8 .vsix files
+                                              ├── GitHub Release with the .vsix files
                                               └── publish (waits for your one click) ──► VS Code Marketplace ─► VS Code
                                                                                      └► Open VSX ──────────► Cursor, VSCodium,
                                                                                                              Windsurf, Gitpod…
-pylspt: the same workflow, smaller. Its tag (v0.3.0) is pinned in vnoc/drivers/python; a bump is one PR.
+nightly.yml: everything × all targets, so a platform break is found on a normal day, not on release day.
+
+The repos:
+  vnoc             core · extension · webview · EVERY driver (drivers/<lang>/) · all plan docs (docs/)
+  pylspt           the Python analyzer with the vendored ruff. Separate because each ruff update adds tens of MB of history.
+  vnoc_playground  spikes only; an archive. No plan lives here once 09 and 11 are copied to vnoc/docs.
 ```
 
 ## 3. The decisions, in one line each
@@ -54,13 +64,19 @@ pylspt: the same workflow, smaller. Its tag (v0.3.0) is pinned in vnoc/drivers/p
 | # | Decision | File |
 |---|---|---|
 | **R1** | Trunk-based: `main` is protected and always releasable; short branches; squash merge; **the PR title** is a Conventional Commit (the only rule contributors must learn). | [`01`](01-git-workflow.md) |
-| **R2** | **release-please** writes the version bump and the CHANGELOG; merging its PR tags the release; the tag starts the build. | [`01`](01-git-workflow.md) §5 |
-| **R3** | **One version** for everything in vnoc (extension, core, driver): `vnoc 0.2.0` means one build of all three. pylspt has its own. | [`01`](01-git-workflow.md) §4 |
-| **R4** | **Eight targets** from the first release: `darwin-arm64`, `darwin-x64`, `linux-x64`, `linux-arm64`, `alpine-x64`, `alpine-arm64`, `win32-x64`, `win32-arm64`. Linux binaries are static musl, so the Alpine packages reuse them. | [`02`](02-building-every-platform.md) |
+| **R2** *(changed)* | **release-please** writes the CHANGELOG and the tag, using a GitHub App token so that its PR gets CI and its tag starts the build. It bumps no file (R10). | [`01`](01-git-workflow.md) §5 |
+| **R3** *(changed)* | **One version** for the extension and the core (`vnoc-v0.2.0`). A bundled driver shares it; a language pack has its own (`driver-python-v0.1.3`). pylspt has its own. | [`01`](01-git-workflow.md) §4 |
+| **R4** *(changed)* | **Eight targets**: `darwin-arm64`, `darwin-x64`, `linux-x64`, `linux-arm64`, `alpine-x64`, `alpine-arm64`, `win32-x64`, `win32-arm64`. Linux binaries are static musl, so the Alpine packages reuse them. **Three block a release** (`darwin-arm64`, `linux-x64`, `win32-x64`); the others publish when they are green. | [`02`](02-building-every-platform.md) |
 | **R5** | Publish to **both** the VS Code Marketplace and Open VSX, from CI only, behind a GitHub environment that needs your approval. | [`03`](03-publishing.md) |
 | **R6** | 0.x ships as normal releases with the **Preview** badge. The pre-release channel (odd/even minor versions) starts after 1.0. | [`03`](03-publishing.md) §4 |
 | **R7** | **One Rust toolchain** for vnoc, its drivers and pylspt, bumped together. | [`04`](04-what-this-changes.md) §1 |
-| **R8** | A split-out analyzer must **build for all eight targets in its own CI**. It becomes the fifth condition of the "own repo" rule. | [`04`](04-what-this-changes.md) §3 |
+| **R8** *(replaced)* | A **nightly build in vnoc** of everything for all targets finds platform breaks, wherever the code lives. A split-out analyzer's own CI only needs Linux, macOS and Windows x64. | [`04`](04-what-this-changes.md) §3 |
+| **R10** | **The tag is the version.** Crates and `package.json` say `0.0.0` in git; the build stamps the tag's number into the `.vsix` and the binaries. | [`01`](01-git-workflow.md) §4 |
+| **R11** | **The `drivers/` folder is the list of languages.** Build and CI read `drivers/*/package.json`; no table of languages is kept by hand. `scripts/new-driver.mjs` scaffolds one. | [`02`](02-building-every-platform.md) §3 |
+| **R12** | CI runs **only the jobs the changed paths need**; one job, `ci-ok`, is the single required check. | [`02`](02-building-every-platform.md) §4 |
+| **R13** | The pylspt pin may be a `rev` on `main` between releases and must be a **tag when the Python driver is released**. pylspt is tagged by hand; no release-please there until someone outside uses it. | [`01`](01-git-workflow.md) §7 |
+| **R14–R16** | **Language packs:** each driver ships as its own small extension from the same repo, installed when a file of that language is first opened; starts with the second language. | [`05`](05-language-packs.md) |
+| **R17** | The plan docs live in **`vnoc/docs/` only**. | §2 |
 
 ## 4. Questions only you can answer
 
@@ -68,8 +84,18 @@ These are not structure; they are about who you publish as and what you give awa
 
 | # | Question | Why it matters | My lean |
 |---|---|---|---|
-| **Q-R1** | **Licence** for vnoc (and pylspt). | The Marketplace shows it; contributors need it before their first PR; without one, nobody may legally use or contribute. pylspt vendors ruff (MIT), whose licence file must stay either way. | MIT or Apache-2.0 for both (Apache adds a patent grant). Pick before the repo goes public. |
+| **Q-R1** ✅ | **Licence** for vnoc (and pylspt). | The Marketplace shows it; contributors need it before their first PR. pylspt vendors ruff (MIT), whose licence file must stay either way. | **Answered 2026-11-10: Apache-2.0.** The standard `LICENSE` text at the root of both repos; `"license": "Apache-2.0"` in every `package.json` and `Cargo.toml`. |
 | **Q-R2** | **Publisher id** and extension name. The id is `publisher.name` (today `vnoc.vnoc`) and **can never change** once published. | Users' settings, keybindings and other extensions refer to it. | Check that `vnoc` is free on both the Marketplace and Open VSX first; if not, your GitHub name (`yaredtsy.vnoc`). |
 | **Q-R3** | Are the **vnoc and pylspt repos public**? | Contributors need to clone both; the driver fetches pylspt by URL. A private pylspt needs a deploy key in vnoc's CI and shuts out contributors. Free GitHub Arm runners exist only for public repos (§02). | Both public at the first release. |
+
+## 5. The order to build it in
+
+The first version asked for all the process before anything had shipped. Do it in three steps:
+
+| When | What |
+|---|---|
+| **before 0.1** | `LICENSE`, `.gitattributes`, one toolchain, the split build scripts with the version stamp, `drivers/python/package.json`, the three blocking targets, `ci.yml` with `ci-ok`, one dry-run release by hand (`workflow_dispatch`). Merge `ui-rework` in pieces, then turn on branch protection. |
+| **at 0.1** | release-please with the App token, the `marketplace` environment, both stores, the five other targets (not blocking), `nightly.yml`. |
+| **with the second language or the first outside contributor** | language packs ([`05`](05-language-packs.md)), `new-driver.mjs`, CODEOWNERS, the issue templates. |
 
 Start with [`01-git-workflow.md`](01-git-workflow.md).

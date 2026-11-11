@@ -82,10 +82,11 @@ V-NOC
 │   │   └── design                    sidebar · canvas · node card · doc panel
 │   │
 │   └── git and release ─────────────────────────── 11-git-and-release/
-│       ├── git workflow              trunk · squash · PR titles · release-please · one version
-│       ├── every platform            8 targets · one build script · CI matrix · musl · Windows
-│       ├── publishing                Marketplace + Open VSX · listing · roll forward
-│       └── what this changes         one toolchain · fifth condition for split repos · files to add
+│       ├── git workflow              trunk · squash · PR titles · release-please · the tag is the version
+│       ├── every platform            8 targets (3 blocking) · drivers/ is the list of languages · CI by path · nightly
+│       ├── publishing                Marketplace + Open VSX · Apache-2.0 · listing · roll forward
+│       ├── what this changes         one toolchain · no version files · files to add
+│       └── language packs            each driver its own small extension, installed when needed
 │
 └── WHAT I FOUND ────────────────────────────────── 01-review.md
 ```

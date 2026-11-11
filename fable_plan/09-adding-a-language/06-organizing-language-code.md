@@ -57,8 +57,13 @@ library. Two repos, a pin and a release step for that is all cost and no benefit
 | its **build or test time** slows vnoc's CI noticeably **[measure: more than ~2 minutes added]** | contributors to the UI should not wait for it | ✅ ty compiles for minutes |
 | its **licence** differs from vnoc's | keeps the licence question per repo | — |
 
-Once an analyzer has moved, it owes one thing: **it builds and passes its tests for all eight release targets in its own CI**, because vnoc
-compiles it from source on every release runner ([`../11-git-and-release/04-what-this-changes.md`](../11-git-and-release/04-what-this-changes.md) §3).
+Once an analyzer has moved, it owes one thing: **its tests pass on Linux, macOS and Windows x64 in its own CI.** The other release targets are
+covered by vnoc's nightly build, which compiles every driver and its analyzer from source for all of them
+([`../11-git-and-release/04-what-this-changes.md`](../11-git-and-release/04-what-this-changes.md) §3).
+
+Where the code lives and how it is downloaded are two separate questions. Every driver lives in vnoc, and every driver ships as **its own small
+extension**, installed when the user first opens a file of that language
+([`../11-git-and-release/05-language-packs.md`](../11-git-and-release/05-language-packs.md)).
 
 So Python stays the one split-out analyzer, and every other language starts inside vnoc. Section 10 shows the move when a second one qualifies.
 
@@ -83,10 +88,11 @@ The same shape for every language, so a contributor who has read one driver can 
 
 ```
 vnoc/drivers/<lang>/
+├── package.json                 this driver's entry in the build (targets), and later its language pack (11/05 §2). No JavaScript.
 ├── README.md                    what is supported (tier 1 / 2 / 3), how to build and test, known gaps
 ├── DECISIONS.md                 the decision sheet from 05-step-by-step.md §1, filled in
-├── vnoc-driver-<lang>.json      the manifest: extensions, file names, language ids, protocol (S14)
-├── Cargo.toml                   a small workspace: the two crates below
+├── bin/                         gitignored. The build puts the program and its manifest `vnoc-driver-<lang>.json` (S14) here
+│                                (NO Cargo.toml at this level: the two crates below are members of vnoc's root workspace, rule 3)
 ├── analysis/                    crate `<lang>-analysis`        ← knows the language; never imports the protocol crate
 │   ├── Cargo.toml
 │   ├── src/lib.rs               the public API: outline(text) → defs, plan_marker(text, def, id_text) → edit, …
@@ -110,8 +116,15 @@ Rules for this folder:
    and the driver can feed it an unsaved buffer.
 2. **Only `driver/` may print**, and only protocol frames to stdout. Put `#![deny(clippy::print_stdout, clippy::print_stderr)]` at the top of
    *both* crates (the Python driver already does this in `main.rs`).
-3. **Join the root vnoc workspace** (`members = ["crates/*", "drivers/<lang>/*"]`) unless the language needs its own toolchain. Then one
-   `cargo test` at the root tests it, and it shares vnoc's `Cargo.lock`. A driver with its own toolchain keeps its own workspace, as Python does.
+3. **Join the root vnoc workspace** unless the language needs its own lockfile. In vnoc's root `Cargo.toml`, written once for every language:
+   ```toml
+   members = ["crates/*", "drivers/*/analysis", "drivers/*/driver"]
+   exclude = ["drivers/python", "spikes"]
+   ```
+   Then one `cargo test` at the root tests it, and it shares vnoc's `Cargo.lock`. The driver folder itself has **no** `Cargo.toml`: Cargo does not
+   allow a workspace inside a workspace, so a folder is either two members of the root one (the normal case) or one separate workspace with its
+   own `Cargo.toml` and `Cargo.lock` (Python, because its lockfile must follow pylspt's). The build tells the two apart by whether
+   `drivers/<lang>/Cargo.lock` exists.
 4. **A driver not written in Rust** (for example a TypeScript driver using the TypeScript compiler API) has the same two parts as two packages, and
    the same rule: the analysis package never imports the wire types.
 
@@ -312,7 +325,9 @@ jobs:
 **Rename the GitHub repo `rust_python_parser` → `pylspt`.** It is the name in every plan, `Cargo.toml` and conversation; GitHub redirects the old URL,
 so nothing breaks the day you do it. Then update the URL in `drivers/python/Cargo.toml`.
 
-**Pin by tag, not by bare commit.** One version for the whole workspace, a tag per release:
+**Pin by tag at a release.** Between releases vnoc's `main` may pin a `rev`, so that a small change on both sides does not need a pylspt release
+each time; the release of the Python driver refuses a `rev` ([`../11-git-and-release/01-git-workflow.md`](../11-git-and-release/01-git-workflow.md) §7).
+One version for the whole workspace, a tag per release:
 
 ```toml
 # vnoc/drivers/python/Cargo.toml
@@ -334,12 +349,12 @@ what to change.
                 [patch."https://github.com/yaredtsy/pylspt"]
                 pylspt-syntax = { path = "../../../pylspt/crates/pylspt-syntax" }
               work on both; run both test suites
-2. pylspt     pull request → merge → tag v0.4.0 → CHANGELOG line
-3. vnoc       pull request: delete nothing from config.toml (it is gitignored), change the tag in Cargo.toml, `cargo update -p pylspt-syntax`
-4. CI         vnoc's CI builds against the tag, never against a local path
+2. pylspt     pull request → merge   (tag v0.4.0 + CHANGELOG line when the Python driver is about to be released)
+3. vnoc       pull request: delete nothing from config.toml (it is gitignored), change the pin in Cargo.toml, `cargo update -p pylspt-syntax`
+4. CI         vnoc's CI builds against the pinned commit or tag, never against a local path
 ```
 
-`scripts/bump-pylspt.sh <tag>` in vnoc can do step 3 (edit the tag, `cargo update`, run the driver's tests) so it is one command.
+`scripts/bump-pylspt.sh <rev or tag>` in vnoc can do step 3 (edit the pin, `cargo update`, run the driver's tests) so it is one command.
 
 ## 9. The vendored ruff: updating it on purpose
 
@@ -361,11 +376,12 @@ cost: someone must be able to update it without you.
 
 | Job | Steps | Files outside the language's own folder |
 |---|---|---|
-| **add a language** | copy the folder shape of §3 · fill `DECISIONS.md` · tier 1 · conformance · one line in `scripts/package.mjs` · one entry in the CI matrix | 2 (packaging script, CI) |
-| **update a language** | change it in its folder; for Python, a pylspt tag bump (§8) | 0 (Python: `Cargo.toml` tag) |
+| **add a language** | `node scripts/new-driver.mjs <lang>` (copies `drivers/_template/`) · fill `DECISIONS.md` · tier 1 · conformance. The build and CI find the folder by themselves (11/02 §3) | 1 (its entry in `release-please-config.json`, written by the script) |
+| **update a language** | change it in its folder; for Python, a pylspt pin bump (§8) | 0 |
+| **release a language** | merge that language pack's release PR; approve the publish (11/05 §7) | 0 |
 | **update the protocol** | change `crates/vnoc-driver-protocol`; every driver that does not compile is fixed in the same pull request; additive changes need no driver change (06-drivers §3d) | — |
 | **move an analyzer out** (it now meets §2's conditions) | `git filter-repo --subdirectory-filter drivers/<lang>/analysis` into a new repo (keeps its history) · add README, CHANGELOG, CI · tag `v0.1.0` · in vnoc delete `drivers/<lang>/analysis/` and point `driver/Cargo.toml` at the git tag | 0 |
-| **remove a language** | delete `drivers/<lang>/` · remove its packaging line and CI entry · release note | 2 |
+| **remove a language** | delete `drivers/<lang>/` · remove its release-please entry · mark its store listing deprecated · release note | 1 |
 
 What removing a language does to users: their `.vnoc/` data for it stays (it holds only the opaque `qualname` and `kind` strings), and those nodes
 show as "no driver for this file", not as Missing (S16). Adding the driver back brings them back. So a language can be dropped from a release
